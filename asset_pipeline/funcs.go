@@ -12,9 +12,18 @@ func init() {
 }
 
 func JavascriptIncludeTag(asset_name string) template.HTML {
-
-	return "123"
+	asset, err := ParseAsset(asset_name, ASSET_JAVASCRIPT)
+	if err != nil {
+		logger.Error(err.Error())
+		return ""
+	}
+	return asset.buildHTML()
 }
 func StyleSheetIncludeTag(asset_name string) template.HTML {
-	return "234"
+	asset, err := ParseAsset(asset_name, ASSET_STYLESCHEET)
+	if err != nil {
+		logger.Error(err.Error())
+		return ""
+	}
+	return asset.buildHTML()
 }

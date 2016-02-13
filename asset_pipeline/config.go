@@ -8,19 +8,35 @@ import (
 )
 
 type assetPipelineConfig struct {
-	Runmode    string
-	MinifyCSS  bool
-	MinifyJS   bool
-	CombineCSS bool
-	CombineJS  bool
+	Runmode         string
+	// Paths to assets
+	AssetsLocations []string
+	// Paths to js/css files
+	PublicDirs      []string
+	// Path to store compiled assets
+	TempDir         string
+
+	// Flags
+	MinifyCSS       bool
+	MinifyJS        bool
+	CombineCSS      bool
+	CombineJS       bool
 }
 
 func (this *assetPipelineConfig) Parse(filename string) {
 	config, err := config.NewConfig("ini", filename)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	Config.Runmode = beego.AppConfig.DefaultString("runmode", "dev")
+	locations := config.DefaultString("assets_dirs", "")
+	Config.AssetsLocations = strings.Split(locations, ",")
+
+	public_dirs := config.DefaultString("public_dirs", "")
+	Config.PublicDirs = strings.Split(public_dirs, ",")
+
+	Config.TempDir = config.DefaultString("temp_dir", "static/assets")
 
 	runmode_params, err := config.GetSection(Config.Runmode)
 	if err != nil {
