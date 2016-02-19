@@ -19,6 +19,13 @@ Add following lines to your main file
 
 Put basic config to ./conf/asset-pipeline.conf
 
+## Less
+Less using Node.js and node-less library, so, you should install it. 
+
+After that you can use less by adding following line to your imports
+
+		_ "github.com/saturn4er/beego-assets/less"
+
 ## Asset format
 Asset extension sholud be .js or .css. Depends on include_tag function
 Current version of library support only "require" method.

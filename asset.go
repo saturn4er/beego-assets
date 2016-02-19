@@ -13,12 +13,12 @@ import (
 	"crypto/md5"
 )
 
-var parsedAssets map[string]map[AssetType]*asset
+var parsedAssets map[string]map[AssetType]*Asset
 
 type AssetType byte
 
 func init() {
-	parsedAssets = map[string]map[AssetType]*asset{}
+	parsedAssets = map[string]map[AssetType]*Asset{}
 }
 func (this *AssetType) String() string {
 	switch *this {
@@ -31,14 +31,14 @@ func (this *AssetType) String() string {
 	}
 }
 
-type asset struct {
+type Asset struct {
 	assetName     string
 	assetType     AssetType
-	include_files []string
+	Include_files []string
 }
 
 // Find asset and parse it
-func (this *asset) parse() error {
+func (this *Asset) parse() error {
 	assetPath, err := this.findAssetPath()
 	if err != nil {
 		return err
@@ -67,13 +67,13 @@ func (this *asset) parse() error {
 				Logger.Warning("%v \"%v\" can't find required file \"%v\"", this.assetType.String(), this.assetName, include_file)
 				continue
 			}
-			this.include_files = append(this.include_files, file)
+			this.Include_files = append(this.Include_files, file)
 		}
 	}
 	return nil
 }
 // Search for asset file in Config.AssetsLocations locations list
-func (this *asset) findAssetPath() (string, error) {
+func (this *Asset) findAssetPath() (string, error) {
 	for _, value := range Config.AssetsLocations {
 		file_path := path.Join(value, this.assetName) + this.assetExt()
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
@@ -86,7 +86,7 @@ func (this *asset) findAssetPath() (string, error) {
 	return "", errors.New("Can't find asset ")
 }
 // Search for asset included file in Config.PublicDirs locations list.
-func (this *asset) findIncludeFilePath(file string) (string, error) {
+func (this *Asset) findIncludeFilePath(file string) (string, error) {
 	var extensions []string;
 	if val, ok := Config.extensions[this.assetType]; ok {
 		extensions = val
@@ -103,14 +103,14 @@ func (this *asset) findIncludeFilePath(file string) (string, error) {
 	}
 	return "", errors.New("Can't find file")
 }
-func (this *asset) assetExt() string {
+func (this *Asset) assetExt() string {
 	switch this.assetType {
 	case ASSET_JAVASCRIPT : return ".js"
 	case ASSET_STYLESHEET: return ".css"
 	default: return ""
 	}
 }
-func (this *asset) build() {
+func (this *Asset) build() {
 	if cbcks, ok := Config.preBuildCallbacks[this.assetType]; ok {
 		for _, value := range cbcks {
 			err := value(this)
@@ -136,8 +136,8 @@ func (this *asset) build() {
 		}
 	}
 }
-func (this *asset)  minify() {
-	for i, asset_file := range this.include_files {
+func (this *Asset)  minify() {
+	for i, asset_file := range this.Include_files {
 		extension := filepath.Ext(asset_file)
 		file, err := os.OpenFile(asset_file, os.O_RDONLY, 0766)
 		if err != nil {
@@ -149,16 +149,16 @@ func (this *asset)  minify() {
 			if err != nil {
 				Logger.Error("[ ASSET_PIPELINE ] %s", err.Error())
 			} else {
-				this.include_files[i] = new_path
+				this.Include_files[i] = new_path
 			}
 		}
 		file.Close()
 	}
 }
 // Return hash of asset, bases on modification time of included files
-func (this *asset) getHash() string {
+func (this *Asset) getHash() string {
 	combined_md5 := md5.New()
-	for _, src := range this.include_files {
+	for _, src := range this.Include_files {
 		stat, err := os.Stat(src)
 		if err != nil {
 			Logger.Error("[ ASSET_PIPELINE ] Can't get info about source file '%s': %v", src, err)
@@ -175,12 +175,12 @@ func (this *asset) getHash() string {
 	md5 := fmt.Sprintf("%x", combined_md5.Sum([]byte{}))
 	return md5
 }
-func (this *asset) combine() {
+func (this *Asset) combine() {
 	hash := this.getHash()
 	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + hash + this.assetExt())
 	// If file already created-replace include files and ignore minifying step
 	if _, err := os.Stat(combined_path); !os.IsNotExist(err) {
-		this.include_files = []string{combined_path}
+		this.Include_files = []string{combined_path}
 		return
 	}
 	combined_file, err := os.OpenFile(combined_path, os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0766)
@@ -188,7 +188,7 @@ func (this *asset) combine() {
 		Logger.Error("[ ASSET_PIPELINE ] Can't create new file: %v", err)
 		return
 	}
-	for _, src := range this.include_files {
+	for _, src := range this.Include_files {
 		file, err := os.OpenFile(src, os.O_RDONLY, 0766)
 		if err != nil {
 			Logger.Error("[ ASSET_PIPELINE ] Can't open source file %v", src)
@@ -198,9 +198,9 @@ func (this *asset) combine() {
 		file_reader.WriteTo(combined_file)
 		combined_file.WriteString("\n")
 	}
-	this.include_files = []string{combined_path}
+	this.Include_files = []string{combined_path}
 }
-func (this *asset) buildHTML() template.HTML {
+func (this *Asset) buildHTML() template.HTML {
 	var tag_fn func(string) template.HTML
 	switch this.assetType {
 	case ASSET_JAVASCRIPT:
@@ -212,7 +212,7 @@ func (this *asset) buildHTML() template.HTML {
 		return ""
 	}
 	var result template.HTML
-	for _, value := range this.include_files {
+	for _, value := range this.Include_files {
 		result += tag_fn("/" + value)
 	}
 	return result
@@ -223,7 +223,7 @@ func js_tag(location string) template.HTML {
 func css_tag(location string) template.HTML {
 	return template.HTML(fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\"> ", location))
 }
-func parseAsset(assetName string, assetType AssetType) (*asset, error) {
+func parseAsset(assetName string, assetType AssetType) (*Asset, error) {
 	if Config.ProductionMode {
 		if v, ok := parsedAssets[assetName]; ok {
 			if asset, ok := v[assetType]; ok {
@@ -231,14 +231,14 @@ func parseAsset(assetName string, assetType AssetType) (*asset, error) {
 			}
 		}
 	}
-	result := new(asset)
+	result := new(Asset)
 	result.assetType = assetType
 	result.assetName = assetName
 	err := result.parse()
 	if err == nil {
 		if Config.ProductionMode {
 			if _, ok := parsedAssets[assetName]; !ok {
-				parsedAssets[assetName] = map[AssetType]*asset{}
+				parsedAssets[assetName] = map[AssetType]*Asset{}
 			}
 			parsedAssets[assetName][assetType] = result
 		}
