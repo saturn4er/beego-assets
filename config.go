@@ -21,14 +21,15 @@ type assetPipelineConfig struct {
 	MinifyJS            bool
 	CombineCSS          bool
 	CombineJS           bool
+	ProductionMode      bool
 
 	// Association of AssetType->Array of extensions
 	extensions          map[AssetType][]string
 
 	// callbacks
-	preBuildCallbacks   map[AssetType]func(*asset) (error)
+	preBuildCallbacks   map[AssetType][]func(*asset) (error)
 	minifyCallbacks     map[string]minifyFileCallback
-	afterBuildCallbacks map[AssetType]func(*asset) (error)
+	afterBuildCallbacks map[AssetType][]func(*asset) (error)
 }
 
 func (this *assetPipelineConfig) Parse(filename string) {
@@ -43,7 +44,6 @@ func (this *assetPipelineConfig) Parse(filename string) {
 
 	public_dirs := config.DefaultString("public_dirs", "")
 	Config.PublicDirs = strings.Split(public_dirs, ",")
-
 	Config.TempDir = config.DefaultString("temp_dir", "static/assets")
 
 	runmode_params, err := config.GetSection(Config.Runmode)
@@ -54,6 +54,7 @@ func (this *assetPipelineConfig) Parse(filename string) {
 	getBoolFromMap(&runmode_params, "minify_js", &Config.MinifyJS, false)
 	getBoolFromMap(&runmode_params, "combine_css", &Config.CombineCSS, false)
 	getBoolFromMap(&runmode_params, "combine_js", &Config.CombineJS, false)
+	getBoolFromMap(&runmode_params, "production_mode", &Config.ProductionMode, false)
 
 }
 func getBoolFromMap(array *map[string]string, key string, variable *bool, default_value bool) {
@@ -67,9 +68,9 @@ func getBoolFromMap(array *map[string]string, key string, variable *bool, defaul
 func init() {
 	Config.Parse("./conf/asset-pipeline.conf")
 	Config.extensions = map[AssetType][]string{}
-	Config.preBuildCallbacks = map[AssetType]func(*asset) (error){}
+	Config.preBuildCallbacks = map[AssetType][]func(*asset) (error){}
 	Config.minifyCallbacks = map[string]minifyFileCallback{}
-	Config.afterBuildCallbacks = map[AssetType]func(*asset) (error){}
+	Config.afterBuildCallbacks = map[AssetType][]func(*asset) (error){}
 }
 
 var Config assetPipelineConfig

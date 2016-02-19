@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/saturn4er/beego-assets.svg?branch=dev)](https://travis-ci.org/saturn4er/beego-assets)
 ## Description
 Rails-style assets for golang beego web framework
 
@@ -35,6 +36,7 @@ You can define different parameters for different runmodes, which are defined in
 - minify_css - Flag to minify stylesheet assets
 - combine_js - Flag to combine multiple javascript files into one file
 - combine_css - Flag to combine multiple stylesheet files into one file
+- production_mode - It this flag is FALSE, assets will be recompiled each page request
 
 ### Config example:
 
@@ -52,12 +54,16 @@ You can define different parameters for different runmodes, which are defined in
 	combine_js = true
 	combine_css = true
 	
+	production_mode = false
+
 	[dev]
 	minify_js = true
 	minify_css = false
 	
 	combine_js = true
 	combine_css = false
+	
+	production_mode = false
 	
 ## API
 Example of working with API you can find in /beego-assets/js or /beego-assets/css folder
