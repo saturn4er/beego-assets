@@ -9,6 +9,6 @@ const (
 	ASSET_STYLESHEET
 )
 
-type pre_afterBuildCallback func(asset *asset) (result_file_path string, err error)
+type pre_afterBuildCallback func(asset *asset) error
 type minifyFileCallback func(file *os.File) (result_file_path string, err error)
 

@@ -1,8 +1,9 @@
 package beego_assets
+
 import (
-"errors"
-"fmt"
-"crypto/md5"
+	"errors"
+	"fmt"
+	"crypto/md5"
 	"os"
 )
 
@@ -11,10 +12,16 @@ func SetAssetFileExtension(extension string, asset_type AssetType) {
 }
 
 func SetPreBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {
-
+	if _, ok := Config.preBuildCallbacks[asset_type]; !ok {
+		Config.preBuildCallbacks[asset_type] = []pre_afterBuildCallback{}
+	}
+	Config.preBuildCallbacks[asset_type] = append(Config.preBuildCallbacks[asset_type], cb)
 }
 func SetAfterBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {
-
+	if _, ok := Config.afterBuildCallbacks[asset_type]; !ok {
+		Config.afterBuildCallbacks[asset_type] = []pre_afterBuildCallback{}
+	}
+	Config.afterBuildCallbacks[asset_type] = append(Config.afterBuildCallbacks[asset_type], cb)
 }
 func SetMinifyCallback(extension string, cb minifyFileCallback) {
 	Config.minifyCallbacks[extension] = cb

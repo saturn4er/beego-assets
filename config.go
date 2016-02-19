@@ -27,9 +27,9 @@ type assetPipelineConfig struct {
 	extensions          map[AssetType][]string
 
 	// callbacks
-	preBuildCallbacks   map[AssetType][]func(*asset) (error)
+	preBuildCallbacks   map[AssetType][]pre_afterBuildCallback
 	minifyCallbacks     map[string]minifyFileCallback
-	afterBuildCallbacks map[AssetType][]func(*asset) (error)
+	afterBuildCallbacks map[AssetType][]pre_afterBuildCallback
 }
 
 func (this *assetPipelineConfig) Parse(filename string) {
@@ -68,9 +68,9 @@ func getBoolFromMap(array *map[string]string, key string, variable *bool, defaul
 func init() {
 	Config.Parse("./conf/asset-pipeline.conf")
 	Config.extensions = map[AssetType][]string{}
-	Config.preBuildCallbacks = map[AssetType][]func(*asset) (error){}
+	Config.preBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
 	Config.minifyCallbacks = map[string]minifyFileCallback{}
-	Config.afterBuildCallbacks = map[AssetType][]func(*asset) (error){}
+	Config.afterBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
 }
 
 var Config assetPipelineConfig

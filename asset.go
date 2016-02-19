@@ -37,6 +37,7 @@ type asset struct {
 	include_files []string
 }
 
+// Find asset and parse it
 func (this *asset) parse() error {
 	assetPath, err := this.findAssetPath()
 	if err != nil {
@@ -71,6 +72,7 @@ func (this *asset) parse() error {
 	}
 	return nil
 }
+// Search for asset file in Config.AssetsLocations locations list
 func (this *asset) findAssetPath() (string, error) {
 	for _, value := range Config.AssetsLocations {
 		file_path := path.Join(value, this.assetName) + this.assetExt()
@@ -83,6 +85,7 @@ func (this *asset) findAssetPath() (string, error) {
 	}
 	return "", errors.New("Can't find asset ")
 }
+// Search for asset included file in Config.PublicDirs locations list.
 func (this *asset) findIncludeFilePath(file string) (string, error) {
 	var extensions []string;
 	if val, ok := Config.extensions[this.assetType]; ok {
@@ -108,11 +111,29 @@ func (this *asset) assetExt() string {
 	}
 }
 func (this *asset) build() {
+	if cbcks, ok := Config.preBuildCallbacks[this.assetType]; ok {
+		for _, value := range cbcks {
+			err := value(this)
+			if err != nil {
+				Logger.Error("[ ASSET_PIPELINE ] %v", err)
+				return
+			}
+		}
+	}
 	if (this.assetType == ASSET_JAVASCRIPT && Config.MinifyJS) || (this.assetType == ASSET_STYLESHEET && Config.MinifyCSS) {
 		this.minify()
 	}
 	if (this.assetType == ASSET_JAVASCRIPT && Config.CombineJS) || (this.assetType == ASSET_STYLESHEET && Config.CombineCSS) {
 		this.combine()
+	}
+	if cbcks, ok := Config.afterBuildCallbacks[this.assetType]; ok {
+		for _, value := range cbcks {
+			err := value(this)
+			if err != nil {
+				Logger.Error("[ ASSET_PIPELINE ] %v", err)
+				return
+			}
+		}
 	}
 }
 func (this *asset)  minify() {
