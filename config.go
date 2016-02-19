@@ -1,4 +1,4 @@
-package asset_pipeline
+package beego_assets
 
 import (
 	"github.com/astaxie/beego"
@@ -8,19 +8,27 @@ import (
 )
 
 type assetPipelineConfig struct {
-	Runmode         string
+	Runmode             string
 	// Paths to assets
-	AssetsLocations []string
+	AssetsLocations     []string
 	// Paths to js/css files
-	PublicDirs      []string
+	PublicDirs          []string
 	// Path to store compiled assets
-	TempDir         string
+	TempDir             string
 
 	// Flags
-	MinifyCSS       bool
-	MinifyJS        bool
-	CombineCSS      bool
-	CombineJS       bool
+	MinifyCSS           bool
+	MinifyJS            bool
+	CombineCSS          bool
+	CombineJS           bool
+
+	// Association of extension->AssetType
+	extensions          map[string]AssetType
+
+	// callbacks
+	preBuildCallbacks   map[AssetType]func(*asset) (error)
+	minifyCallbacks     map[string]minifyFileCallback
+	afterBuildCallbacks map[AssetType]func(*asset) (error)
 }
 
 func (this *assetPipelineConfig) Parse(filename string) {
@@ -40,7 +48,7 @@ func (this *assetPipelineConfig) Parse(filename string) {
 
 	runmode_params, err := config.GetSection(Config.Runmode)
 	if err != nil {
-		logger.Warn("Can't get section \"%v\" from config asset-pipeline.conf. Using default params", Config.Runmode)
+		Logger.Warn("Can't get section \"%v\" from config asset-pipeline.conf. Using default params", Config.Runmode)
 	}
 	getBoolFromMap(&runmode_params, "minify_css", &Config.MinifyCSS, false)
 	getBoolFromMap(&runmode_params, "minify_js", &Config.MinifyJS, false)
@@ -58,6 +66,10 @@ func getBoolFromMap(array *map[string]string, key string, variable *bool, defaul
 }
 func init() {
 	Config.Parse("./conf/asset-pipeline.conf")
+	Config.extensions = map[string]AssetType{}
+	Config.preBuildCallbacks = map[AssetType]func(*asset) (error){}
+	Config.minifyCallbacks = map[string]minifyFileCallback{}
+	Config.afterBuildCallbacks = map[AssetType]func(*asset) (error){}
 }
 
 var Config assetPipelineConfig
