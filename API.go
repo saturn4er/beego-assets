@@ -1,7 +1,7 @@
 package beego_assets
 
 func SetAssetFileExtension(extension string, asset_type AssetType) {
-	Config.extensions[extension] = asset_type
+	Config.extensions[asset_type] = append(Config.extensions[asset_type], extension)
 }
 
 func SetPreBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {

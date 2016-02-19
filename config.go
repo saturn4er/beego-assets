@@ -22,8 +22,8 @@ type assetPipelineConfig struct {
 	CombineCSS          bool
 	CombineJS           bool
 
-	// Association of extension->AssetType
-	extensions          map[string]AssetType
+	// Association of AssetType->Array of extensions
+	extensions          map[AssetType][]string
 
 	// callbacks
 	preBuildCallbacks   map[AssetType]func(*asset) (error)
@@ -66,7 +66,7 @@ func getBoolFromMap(array *map[string]string, key string, variable *bool, defaul
 }
 func init() {
 	Config.Parse("./conf/asset-pipeline.conf")
-	Config.extensions = map[string]AssetType{}
+	Config.extensions = map[AssetType][]string{}
 	Config.preBuildCallbacks = map[AssetType]func(*asset) (error){}
 	Config.minifyCallbacks = map[string]minifyFileCallback{}
 	Config.afterBuildCallbacks = map[AssetType]func(*asset) (error){}

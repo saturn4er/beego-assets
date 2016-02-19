@@ -72,18 +72,28 @@ func (this *asset) findAssetPath() (string, error) {
 	for _, value := range Config.AssetsLocations {
 		file_path := path.Join(value, this.assetName) + this.assetExt()
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
+			if _, err := os.Stat(file_path); !os.IsNotExist(err) {
+				return file_path, nil
+			}
 			return file_path, nil
 		}
 	}
 	return "", errors.New("Can't find asset ")
 }
 func (this *asset) findIncludeFilePath(file string) (string, error) {
+	var extensions []string;
+	if val, ok := Config.extensions[this.assetType]; ok {
+		extensions = val
+	}
 	for _, value := range Config.PublicDirs {
-		file_path := path.Join(value, file) + this.assetExt()
-		if stat, err := os.Stat(file_path); !os.IsNotExist(err) {
-			stat.ModTime()
-			return file_path, nil
+		for _, ext := range extensions {
+			file_path := path.Join(value, file) + ext
+			if stat, err := os.Stat(file_path); !os.IsNotExist(err) {
+				stat.ModTime()
+				return file_path, nil
+			}
 		}
+
 	}
 	return "", errors.New("Can't find file")
 }

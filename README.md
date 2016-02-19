@@ -1,5 +1,5 @@
 ## Description
-Rails-style assets for golang beego web frameworkc
+Rails-style assets for golang beego web framework
 
 ## Installation
 To install library, create config in ./conf/asset-pipeline.conf and enter into the console:
@@ -8,7 +8,7 @@ To install library, create config in ./conf/asset-pipeline.conf and enter into t
 
 	
 ## Usage
-Add following line to your main file
+Add following lines to your main file
  
 	import (
 		_ "github.com/saturn4er/beego-assets"
@@ -25,11 +25,11 @@ The configuration file is ./conf/asset-pipeline.conf have basic INI format.
 
 ### Root params
 - assets_dir - paths to assets files(You can specify many directories, separated by commas)
-- public_dirs - paths, where library will search files for assets.(You can specify many directories, separated by commas)
+- public_dirs - paths, where library will search for files for assets.(You can specify many directories, separated by commas)
 - temp_dir - path to store compiled asset files.
 
 ### Sections
-You can define different parameters for different runmodes, which is defined in ./conf/app.conf. Name of section is the value of runmode. If there is no such section, all the parameters will be false
+You can define different parameters for different runmodes, which are defined in ./conf/app.conf. Name of section is the value of runmode. If there is no such section, all the parameters will be false
 #### Parameters
 - minify_js - Flag to minify javascript assets
 - minify_css - Flag to minify stylesheet assets

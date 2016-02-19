@@ -12,8 +12,8 @@ func init() {
 	beego_assets.SetMinifyCallback(JS_EXTENSION, MinifyJavascript)
 }
 
-func MinifyJavascript(file_path beego_assets.AssetPath) (result_path string, err error) {
-	hash, err := file_path.GetHash()
+func MinifyJavascript(file *beego_assets.AssetFile) (result_path string, err error) {
+	hash, err := file.GetHash()
 	if err != nil {
 		beego_assets.Logger.Error(err.Error())
 		return
