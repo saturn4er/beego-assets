@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/saturn4er/beego-assets.svg?branch=dev)](https://travis-ci.org/saturn4er/beego-assets)
+[![Build Status](https://travis-ci.org/saturn4er/beego-assets.svg?branch=master)](https://travis-ci.org/saturn4er/beego-assets)
 ## Description
 Rails-style assets for golang beego web framework
 
@@ -19,7 +19,18 @@ Add following lines to your main file
 
 Put basic config to ./conf/asset-pipeline.conf
 
-	
+## Asset format
+Asset extension sholud be .js or .css. Depends on include_tag function
+Current version of library support only "require" method.
+
+### CSS asset example
+ 
+	/*= require css/file1
+	/*= require css/file1
+### JS asset example
+ 
+	//= require js/file1
+	//= require js/file2
 
 ## Config
 The configuration file is ./conf/asset-pipeline.conf have basic INI format.
