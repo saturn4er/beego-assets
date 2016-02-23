@@ -19,6 +19,11 @@ Add following lines to your main file
 
 Put basic config to ./conf/asset-pipeline.conf
 
+Use functions javascript_include_tag and stylesheet_include_tag in your templates
+
+	{{ javascript_include_tag "application" }}
+	{{ stylesheet_include_tag "application" }}
+
 ## Less
 Less using Node.js and node-less library, so, you should install it. 
 
@@ -101,3 +106,6 @@ Example of working with API you can find in /beego-assets/js or /beego-assets/cs
 - SetAfterBuildCallback  - define after-build callback for assets. "cb" will be executed after asset was built
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed after asset compilation
+	
+## Bugs
+- When combine CSS files, neet to change relative paths.
