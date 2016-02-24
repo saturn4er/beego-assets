@@ -13,8 +13,6 @@ Add following lines to your main file
  
 	import (
 		_ "github.com/saturn4er/beego-assets"
-		_ "github.com/saturn4er/beego-assets/js"
-		_ "github.com/saturn4er/beego-assets/css"
 	)
 
 Put basic config to ./conf/asset-pipeline.conf
@@ -68,17 +66,15 @@ You can define different parameters for different runmodes, which are defined in
 	production_mode = false
 
 	[dev]
-	minify_js = true
+	minify_js = false
 	minify_css = false
 	
-	combine_js = true
+	combine_js = false
 	combine_css = false
 	
 	production_mode = false
 	
 ## API
-Example of working with API you can find in /beego-assets/js or /beego-assets/css folder
-
 - SetAssetFileExtension - add your own extension to files finder
 	- extension string	- Extension name, with point.(Ex. ".js")
 	- asset_type AssetType	- beego_assets.ASSET_STYLESHEET / beego_assets.ASSET_JAVASCRIPT
