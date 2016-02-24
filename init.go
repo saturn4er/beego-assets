@@ -7,8 +7,8 @@ import (
 
 func init() {
 	Logger.SetLogger("console", "")
-	beego.AddFuncMap("javascript_include_tag", getAssetHelper(ASSET_JAVASCRIPT))
-	beego.AddFuncMap("stylesheet_include_tag", getAssetHelper(ASSET_STYLESHEET))
+	beego.AddFuncMap("asset_js", getAssetHelper(ASSET_JAVASCRIPT))
+	beego.AddFuncMap("asset_css", getAssetHelper(ASSET_STYLESHEET))
 	Config.extensions[ASSET_JAVASCRIPT] = []string{".js"}
 	Config.extensions[ASSET_STYLESHEET] = []string{".css"}
 

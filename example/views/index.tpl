@@ -4,8 +4,8 @@
 <head>
 	<title>Beego</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	{{ javascript_include_tag "application" }}
-	{{ stylesheet_include_tag "application" }}
+	{{ asset_js "application" }}
+	{{ asset_css "application" }}
 </head>
 
 <body>
