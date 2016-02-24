@@ -19,8 +19,8 @@ Put basic config to ./conf/asset-pipeline.conf
 
 Use functions javascript_include_tag and stylesheet_include_tag in your templates
 
-	{{ javascript_include_tag "application" }}
-	{{ stylesheet_include_tag "application" }}
+	{{ asset_js "application" }}
+	{{ asset_css "application" }}
 
 ## Less
 Less using Node.js and node-less library, so, you should install it. 
@@ -52,6 +52,7 @@ The configuration file is ./conf/asset-pipeline.conf have basic INI format.
 
 ### Sections
 You can define different parameters for different runmodes, which are defined in ./conf/app.conf. Name of section is the value of runmode. If there is no such section, all the parameters will be false
+
 #### Parameters
 - minify_js - Flag to minify javascript assets
 - minify_css - Flag to minify stylesheet assets
@@ -91,6 +92,10 @@ You can define different parameters for different runmodes, which are defined in
 	- extension string	- Extension name, with point.(Ex. ".js")
 	- asset_type AssetType	- beego_assets.ASSET_STYLESHEET / beego_assets.ASSET_JAVASCRIPT
 	
+- SetPreLoadCallback  - define pre-load callback for assets. "cb" will be executed before loading assets files to memory.
+	- asset_type AssetType
+	- cb preLoadCallback	- callback, which will be executed before asset compilation
+		
 - SetPreBuildCallback  - define pre-build callback for assets. "cb" will be executed before building of asset
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed before asset compilation
@@ -98,6 +103,3 @@ You can define different parameters for different runmodes, which are defined in
 - SetAfterBuildCallback  - define after-build callback for assets. "cb" will be executed after asset was built
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed after asset compilation
-	
-## Bugs
-- When combine CSS files, neet to change relative paths.

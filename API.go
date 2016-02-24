@@ -8,7 +8,12 @@ import (
 func SetAssetFileExtension(extension string, asset_type AssetType) {
 	Config.extensions[asset_type] = append(Config.extensions[asset_type], extension)
 }
-
+func SetPreLoadCallback(asset_type AssetType, cb preLoadCallback) {
+	if _, ok := Config.preLoadCallbacks[asset_type]; !ok {
+		Config.preLoadCallbacks[asset_type] = []preLoadCallback{}
+	}
+	Config.preLoadCallbacks[asset_type] = append(Config.preLoadCallbacks[asset_type], cb)
+}
 func SetPreBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {
 	if _, ok := Config.preBuildCallbacks[asset_type]; !ok {
 		Config.preBuildCallbacks[asset_type] = []pre_afterBuildCallback{}

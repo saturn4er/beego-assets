@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"path/filepath"
 	"github.com/tdewolff/minify"
+	"regexp"
 )
 
 var minifier = minify.New()
@@ -102,8 +103,17 @@ func (this *Asset) assetExt() string {
 }
 
 func (this *Asset) build() {
+	if cbcks, ok := Config.preLoadCallbacks[this.assetType]; ok {
+		for _, value := range cbcks {
+			err := value(this)
+			if err != nil {
+				Error(err.Error())
+				return
+			}
+		}
+	}
 	this.result = this.readAllIncludeFiles()
-	if !this.needCombine && ! this.needMinify {
+	if !this.needCombine && !this.needMinify {
 		return
 	}
 	if this.assetType == ASSET_STYLESHEET {
@@ -135,6 +145,7 @@ func (this *Asset) build() {
 	}
 	this.writeResultToFiles()
 }
+
 func (this *Asset) minify() {
 	var minifyHandler func(string) (string, error)
 	if this.assetType == ASSET_JAVASCRIPT {
@@ -163,12 +174,14 @@ func (this *Asset) combine() {
 	if this.assetType == ASSET_JAVASCRIPT {
 		files_devider = ";"
 	}
-	result := ""
+	result := make([]string, len(this.result))
+	i := 0
 	for _, body := range this.result {
-		result += body + files_devider
+		result[i] = body; i++
 	}
-	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + GetAssetFileHash(&result) + this.assetExt())
-	this.result = map[string]string{combined_path:result}
+	s_result := strings.Join(result, files_devider)
+	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + GetAssetFileHash(&s_result) + this.assetExt())
+	this.result = map[string]string{combined_path:s_result}
 }
 
 // Read all files from Include files and return map[path_to_file]body
@@ -216,7 +229,21 @@ func (this *Asset) writeResultToFiles() {
 }
 
 func (this *Asset) replaceRelLinks() {
-
+	regex, err := regexp.Compile("url\\( *['\"]? *(\\/?(?:(?:\\.{1,2}|[a-zA-Z0-9-_.]+)\\/)*[a-zA-Z0-9-_.]+\\.[a-zA-Z0-9-_.]+)(?:\\?.+?)? *['\"]? *\\)")
+	if err != nil {
+		Error(err.Error())
+		return
+	}
+	for path, body := range this.result {
+		file_dir := filepath.Dir(path)
+		urls := regex.FindAllStringSubmatch(body, -1)
+		for _, mathces := range urls {
+			url_dir := mathces[1]
+			abs_path := filepath.Join("/", file_dir, url_dir)
+			body = strings.Replace(body, url_dir, abs_path, -1)
+		}
+		this.result[path] = body
+	}
 }
 
 // Return html string of result

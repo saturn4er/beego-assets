@@ -27,6 +27,7 @@ type assetPipelineConfig struct {
 	extensions          map[AssetType][]string
 
 	// callbacks
+	preLoadCallbacks    map[AssetType][]preLoadCallback
 	preBuildCallbacks   map[AssetType][]pre_afterBuildCallback
 	minifyCallbacks     map[string]minifyFileCallback
 	afterBuildCallbacks map[AssetType][]pre_afterBuildCallback
@@ -71,6 +72,7 @@ func init() {
 	Config.preBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
 	Config.minifyCallbacks = map[string]minifyFileCallback{}
 	Config.afterBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
+	Config.preLoadCallbacks = map[AssetType][]preLoadCallback{}
 }
 
 var Config assetPipelineConfig
