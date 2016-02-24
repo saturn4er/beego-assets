@@ -17,6 +17,18 @@ Add following lines to your main file
 
 Put basic config to ./conf/asset-pipeline.conf
 
+Use functions javascript_include_tag and stylesheet_include_tag in your templates
+
+	{{ javascript_include_tag "application" }}
+	{{ stylesheet_include_tag "application" }}
+
+## Less
+Less using Node.js and node-less library, so, you should install it. 
+
+After that you can use less by adding following line to your imports
+
+		_ "github.com/saturn4er/beego-assets/less"
+
 ## Asset format
 Asset extension sholud be .js or .css. Depends on include_tag function
 Current version of library support only "require" method.
@@ -86,3 +98,6 @@ You can define different parameters for different runmodes, which are defined in
 - SetAfterBuildCallback  - define after-build callback for assets. "cb" will be executed after asset was built
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed after asset compilation
+	
+## Bugs
+- When combine CSS files, neet to change relative paths.
