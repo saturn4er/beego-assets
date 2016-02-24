@@ -8,37 +8,24 @@ import (
 	"path"
 	"strings"
 	"html/template"
-	"fmt"
 	"path/filepath"
-	"crypto/md5"
+	"github.com/tdewolff/minify"
 )
 
-var parsedAssets map[string]map[AssetType]*asset
+var minifier = minify.New()
+var parsedAssets = map[string]map[AssetType]*Asset{}
 
-type AssetType byte
-
-func init() {
-	parsedAssets = map[string]map[AssetType]*asset{}
-}
-func (this *AssetType) String() string {
-	switch *this {
-	case ASSET_JAVASCRIPT:
-		return "Javascript asset"
-	case ASSET_STYLESHEET:
-		return "Css asset"
-	default:
-		return "Unknown asset type"
-	}
-}
-
-type asset struct {
+type Asset struct {
 	assetName     string
 	assetType     AssetType
-	include_files []string
+	needMinify    bool
+	needCombine   bool
+	Include_files []string
+	result        map[string]string
 }
 
 // Find asset and parse it
-func (this *asset) parse() error {
+func (this *Asset) parse() error {
 	assetPath, err := this.findAssetPath()
 	if err != nil {
 		return err
@@ -64,16 +51,17 @@ func (this *asset) parse() error {
 			include_file := line[len(prefix):]
 			file, err := this.findIncludeFilePath(include_file)
 			if err != nil {
-				Logger.Warning("%v \"%v\" can't find required file \"%v\"", this.assetType.String(), this.assetName, include_file)
+				Warning("%v \"%v\" can't find required file \"%v\"", this.assetType.String(), this.assetName, include_file)
 				continue
 			}
-			this.include_files = append(this.include_files, file)
+			this.Include_files = append(this.Include_files, file)
 		}
 	}
 	return nil
 }
+
 // Search for asset file in Config.AssetsLocations locations list
-func (this *asset) findAssetPath() (string, error) {
+func (this *Asset) findAssetPath() (string, error) {
 	for _, value := range Config.AssetsLocations {
 		file_path := path.Join(value, this.assetName) + this.assetExt()
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
@@ -85,8 +73,9 @@ func (this *asset) findAssetPath() (string, error) {
 	}
 	return "", errors.New("Can't find asset ")
 }
+
 // Search for asset included file in Config.PublicDirs locations list.
-func (this *asset) findIncludeFilePath(file string) (string, error) {
+func (this *Asset) findIncludeFilePath(file string) (string, error) {
 	var extensions []string;
 	if val, ok := Config.extensions[this.assetType]; ok {
 		extensions = val
@@ -103,104 +92,135 @@ func (this *asset) findIncludeFilePath(file string) (string, error) {
 	}
 	return "", errors.New("Can't find file")
 }
-func (this *asset) assetExt() string {
+
+func (this *Asset) assetExt() string {
 	switch this.assetType {
 	case ASSET_JAVASCRIPT : return ".js"
 	case ASSET_STYLESHEET: return ".css"
 	default: return ""
 	}
 }
-func (this *asset) build() {
+
+func (this *Asset) build() {
+	this.result = this.readAllIncludeFiles()
+	if !this.needCombine && ! this.needMinify {
+		return
+	}
+	if this.assetType == ASSET_STYLESHEET {
+		this.replaceRelLinks()
+	}
 	if cbcks, ok := Config.preBuildCallbacks[this.assetType]; ok {
 		for _, value := range cbcks {
-			err := value(this)
+			err := value(this.result, this)
 			if err != nil {
-				Logger.Error("[ ASSET_PIPELINE ] %v", err)
+				Error(err.Error())
 				return
 			}
 		}
 	}
-	if (this.assetType == ASSET_JAVASCRIPT && Config.MinifyJS) || (this.assetType == ASSET_STYLESHEET && Config.MinifyCSS) {
+	if this.needMinify {
 		this.minify()
 	}
-	if (this.assetType == ASSET_JAVASCRIPT && Config.CombineJS) || (this.assetType == ASSET_STYLESHEET && Config.CombineCSS) {
+	if this.needCombine {
 		this.combine()
 	}
 	if cbcks, ok := Config.afterBuildCallbacks[this.assetType]; ok {
 		for _, value := range cbcks {
-			err := value(this)
+			err := value(this.result, this)
 			if err != nil {
-				Logger.Error("[ ASSET_PIPELINE ] %v", err)
+				Error(err.Error())
 				return
 			}
 		}
 	}
+	this.writeResultToFiles()
 }
-func (this *asset)  minify() {
-	for i, asset_file := range this.include_files {
-		extension := filepath.Ext(asset_file)
-		file, err := os.OpenFile(asset_file, os.O_RDONLY, 0766)
+func (this *Asset) minify() {
+	var minifyHandler func(string) (string, error)
+	if this.assetType == ASSET_JAVASCRIPT {
+		minifyHandler = MinifyJavascript
+	}else {
+		minifyHandler = MinifyStylesheet
+	}
+	for path, body := range this.result {
+		delete(this.result, path)
+		file_name := filepath.Base(path)
+		file_ext := filepath.Ext(file_name)
+		file_name = file_name[:len(file_name) - len(file_ext)]
+		file_hash := GetAssetFileHash(&body)
+		minified_path := filepath.Join(Config.TempDir, file_name + "-" + file_hash + file_ext)
+		minified_body, err := minifyHandler(body)
 		if err != nil {
-			Logger.Error("[ ASSET_PIPELINE ] Can't open source file %v", asset_file)
+			Error(err.Error())
+		} else {
+			this.result[minified_path] = minified_body
+		}
+	}
+}
+
+func (this *Asset) combine() {
+	var files_devider string
+	if this.assetType == ASSET_JAVASCRIPT {
+		files_devider = ";"
+	}
+	result := ""
+	for _, body := range this.result {
+		result += body + files_devider
+	}
+	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + GetAssetFileHash(&result) + this.assetExt())
+	this.result = map[string]string{combined_path:result}
+}
+
+// Read all files from Include files and return map[path_to_file]body
+func (this *Asset) readAllIncludeFiles() (map[string]string) {
+	result := map[string]string{}
+
+	for _, path := range this.Include_files {
+		file, err := os.OpenFile(path, os.O_RDONLY, 0766)
+		if err != nil {
+			Warning("Can't open file %s. %v", path, err)
+		}
+		file_body := ""
+		file_reader := bufio.NewReader(file)
+		for {
+			line, _, err := file_reader.ReadLine()
+			if err == io.EOF {
+				break
+			}
+			file_body += string(line) + "\n"
+		}
+		result[path] = file_body
+		file.Close()
+	}
+	return result
+}
+
+func (this *Asset) writeResultToFiles() {
+	for path, body := range this.result {
+		path_dir := filepath.Dir(path)
+		err := os.MkdirAll(path_dir, 0766)
+		if err != nil {
+			Error(path_dir)
 			continue
 		}
-		if callback, ok := Config.minifyCallbacks[extension]; ok {
-			new_path, err := callback(file)
-			if err != nil {
-				Logger.Error("[ ASSET_PIPELINE ] %s", err.Error())
-			} else {
-				this.include_files[i] = new_path
-			}
+		file, err := os.OpenFile(path, os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0766)
+		if err != nil {
+			Error("Can't write result file: %v", err)
+		}
+		_, err = file.WriteString(body)
+		if err != nil {
+			Error("Can't write body to result file: %v", err)
 		}
 		file.Close()
 	}
 }
-// Return hash of asset, bases on modification time of included files
-func (this *asset) getHash() string {
-	combined_md5 := md5.New()
-	for _, src := range this.include_files {
-		stat, err := os.Stat(src)
-		if err != nil {
-			Logger.Error("[ ASSET_PIPELINE ] Can't get info about source file '%s': %v", src, err)
-			continue
-		}
-		if stat.IsDir() {
-			Logger.Error("[ ASSET_PIPELINE ] Can't use directory in `require`: %s", src)
-			continue
-		}
-		combined_md5.Write([]byte(stat.ModTime().String() + src))
 
-	}
+func (this *Asset) replaceRelLinks() {
 
-	md5 := fmt.Sprintf("%x", combined_md5.Sum([]byte{}))
-	return md5
 }
-func (this *asset) combine() {
-	hash := this.getHash()
-	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + hash + this.assetExt())
-	// If file already created-replace include files and ignore minifying step
-	if _, err := os.Stat(combined_path); !os.IsNotExist(err) {
-		this.include_files = []string{combined_path}
-		return
-	}
-	combined_file, err := os.OpenFile(combined_path, os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0766)
-	if err != nil {
-		Logger.Error("[ ASSET_PIPELINE ] Can't create new file: %v", err)
-		return
-	}
-	for _, src := range this.include_files {
-		file, err := os.OpenFile(src, os.O_RDONLY, 0766)
-		if err != nil {
-			Logger.Error("[ ASSET_PIPELINE ] Can't open source file %v", src)
-			continue
-		}
-		file_reader := bufio.NewReader(file)
-		file_reader.WriteTo(combined_file)
-		combined_file.WriteString("\n")
-	}
-	this.include_files = []string{combined_path}
-}
-func (this *asset) buildHTML() template.HTML {
+
+// Return html string of result
+func (this *Asset) buildHTML() template.HTML {
 	var tag_fn func(string) template.HTML
 	switch this.assetType {
 	case ASSET_JAVASCRIPT:
@@ -208,22 +228,18 @@ func (this *asset) buildHTML() template.HTML {
 	case ASSET_STYLESHEET:
 		tag_fn = css_tag
 	default:
-		fmt.Println("Unknown asset type")
+		Error("Unknown asset type")
 		return ""
 	}
 	var result template.HTML
-	for _, value := range this.include_files {
-		result += tag_fn("/" + value)
+	for path, _ := range this.result {
+		result += tag_fn("/" + path)
 	}
 	return result
 }
-func js_tag(location string) template.HTML {
-	return template.HTML(fmt.Sprintf("<script type=text/javascript src=\"%s\"></script>", location))
-}
-func css_tag(location string) template.HTML {
-	return template.HTML(fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\"> ", location))
-}
-func parseAsset(assetName string, assetType AssetType) (*asset, error) {
+
+func getAsset(assetName string, assetType AssetType) (*Asset, error) {
+	// Check if this asset already built ( only if production mode enabled )
 	if Config.ProductionMode {
 		if v, ok := parsedAssets[assetName]; ok {
 			if asset, ok := v[assetType]; ok {
@@ -231,14 +247,30 @@ func parseAsset(assetName string, assetType AssetType) (*asset, error) {
 			}
 		}
 	}
-	result := new(asset)
+	result := new(Asset)
 	result.assetType = assetType
 	result.assetName = assetName
+	if assetType == ASSET_JAVASCRIPT {
+		if Config.MinifyJS {
+			result.needMinify = true
+		}
+		if Config.CombineJS {
+			result.needCombine = true
+		}
+	}else {
+		if Config.MinifyCSS {
+			result.needMinify = true
+		}
+		if Config.CombineCSS {
+			result.needCombine = true
+		}
+	}
 	err := result.parse()
 	if err == nil {
+		// Add asset to cache ( only if production mode enabled )
 		if Config.ProductionMode {
 			if _, ok := parsedAssets[assetName]; !ok {
-				parsedAssets[assetName] = map[AssetType]*asset{}
+				parsedAssets[assetName] = map[AssetType]*Asset{}
 			}
 			parsedAssets[assetName][assetType] = result
 		}

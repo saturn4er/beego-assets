@@ -1,9 +1,15 @@
-body {
-    color: #fff;
-    background-size: 10px;
-    background-color: black;
+@font-face {
+  font-family: Pompadur; /* Имя шрифта */
+  src: url(../fontawesome-webfont.woff); /* Путь к файлу со шрифтом */
 }
+
+body {
+  color: #fff;
+  background-size: 10px;
+  background-color: black;
+}
+
 a {
-    color: #fff;
-    background-size: 10px;
+  color: #fff;
+  background-size: 10px;
 }

@@ -87,10 +87,6 @@ Example of working with API you can find in /beego-assets/js or /beego-assets/cs
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed before asset compilation
 	
-- SetMinifyCallback
-	- extension string	- Extension name, with point.(Ex. ".js")
-	- cb buildFileCallback	- Callback, which will be executed to minify file.
-	
 - SetAfterBuildCallback  - define after-build callback for assets. "cb" will be executed after asset was built
 	- asset_type AssetType
 	- cb pre_afterBuildCallback	- callback, which will be executed after asset compilation
