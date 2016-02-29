@@ -17,7 +17,6 @@ func (this *AssetType) String() string {
 	}
 }
 
-
 const (
 	ASSET_JAVASCRIPT AssetType = iota
 	ASSET_STYLESHEET
@@ -29,5 +28,9 @@ const JS_EXTENSION = ".js"
 const JS_EXTENSION_LEN = len(JS_EXTENSION)
 
 type preLoadCallback func(*Asset) error
-type pre_afterBuildCallback func(result map[string]string, asset *Asset) error
+type pre_afterBuildCallback func(result []assetFile, asset *Asset) error
 type minifyFileCallback func(file *os.File) (result_file_path string, err error)
+type assetFile struct {
+	Path string
+	Body string
+}

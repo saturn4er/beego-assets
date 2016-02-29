@@ -21,16 +21,24 @@ Use functions javascript_include_tag and stylesheet_include_tag in your template
 
 	{{ asset_js "application" }}
 	{{ asset_css "application" }}
+## Preprocessors
+Library support preprocessors, like sass, less, scss and coffeescript. It use Node.js and corresponding libraries, so, you should install them before using it.
+### Installation
+First, install corresponding node modules
 
-## Less
-Less using Node.js and node-less library, so, you should install it. 
-
+	Less: npm install less -g
+	Scss/Sass: npm install node-sass -g
+	Coffeescript: npm install coffee-script -g
+	
 After that you can use less by adding following line to your imports
 
-		_ "github.com/saturn4er/beego-assets/less"
+	Less: import _ "github.com/saturn4er/beego-assets/less"
+	Sass: import _ "github.com/saturn4er/beego-assets/sass"
+	Scss: import _ "github.com/saturn4er/beego-assets/scss"
+	Coffeescript: import _ "github.com/saturn4er/beego-assets/coffeescript"
 
 ## Asset format
-Asset extension sholud be .js or .css. Depends on include_tag function
+Asset extension sholud be .js or .css. Depends on include_tag function<br>
 Current version of library support only "require" method.
 
 ### CSS asset example

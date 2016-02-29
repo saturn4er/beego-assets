@@ -22,7 +22,7 @@ type Asset struct {
 	needMinify    bool
 	needCombine   bool
 	Include_files []string
-	result        map[string]string
+	result        []assetFile
 }
 
 // Find asset and parse it
@@ -153,18 +153,18 @@ func (this *Asset) minify() {
 	}else {
 		minifyHandler = MinifyStylesheet
 	}
-	for path, body := range this.result {
-		delete(this.result, path)
-		file_name := filepath.Base(path)
+	for i, assetFile := range this.result {
+		file_name := filepath.Base(assetFile.Path)
 		file_ext := filepath.Ext(file_name)
 		file_name = file_name[:len(file_name) - len(file_ext)]
-		file_hash := GetAssetFileHash(&body)
+		file_hash := GetAssetFileHash(&assetFile.Body)
 		minified_path := filepath.Join(Config.TempDir, file_name + "-" + file_hash + file_ext)
-		minified_body, err := minifyHandler(body)
+		minified_body, err := minifyHandler(assetFile.Body)
 		if err != nil {
 			Error(err.Error())
 		} else {
-			this.result[minified_path] = minified_body
+			this.result[i].Path = minified_path
+			this.result[i].Body = minified_body
 		}
 	}
 }
@@ -175,18 +175,17 @@ func (this *Asset) combine() {
 		files_devider = ";"
 	}
 	result := make([]string, len(this.result))
-	i := 0
-	for _, body := range this.result {
-		result[i] = body; i++
+	for i, assetFile := range this.result {
+		result[i] = assetFile.Body
 	}
 	s_result := strings.Join(result, files_devider)
 	combined_path := filepath.Join(Config.TempDir, this.assetName + "-" + GetAssetFileHash(&s_result) + this.assetExt())
-	this.result = map[string]string{combined_path:s_result}
+	this.result = []assetFile{assetFile{Path:combined_path, Body:s_result}}
 }
 
 // Read all files from Include files and return map[path_to_file]body
-func (this *Asset) readAllIncludeFiles() (map[string]string) {
-	result := map[string]string{}
+func (this *Asset) readAllIncludeFiles() []assetFile {
+	result := []assetFile{}
 
 	for _, path := range this.Include_files {
 		file, err := os.OpenFile(path, os.O_RDONLY, 0766)
@@ -202,25 +201,25 @@ func (this *Asset) readAllIncludeFiles() (map[string]string) {
 			}
 			file_body += string(line) + "\n"
 		}
-		result[path] = file_body
+		result = append(result, assetFile{Path:path, Body:file_body})
 		file.Close()
 	}
 	return result
 }
 
 func (this *Asset) writeResultToFiles() {
-	for path, body := range this.result {
-		path_dir := filepath.Dir(path)
+	for _, assetFile := range this.result {
+		path_dir := filepath.Dir(assetFile.Path)
 		err := os.MkdirAll(path_dir, 0766)
 		if err != nil {
 			Error(path_dir)
 			continue
 		}
-		file, err := os.OpenFile(path, os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0766)
+		file, err := os.OpenFile(assetFile.Path, os.O_CREATE | os.O_TRUNC | os.O_WRONLY, 0766)
 		if err != nil {
 			Error("Can't write result file: %v", err)
 		}
-		_, err = file.WriteString(body)
+		_, err = file.WriteString(assetFile.Body)
 		if err != nil {
 			Error("Can't write body to result file: %v", err)
 		}
@@ -234,15 +233,15 @@ func (this *Asset) replaceRelLinks() {
 		Error(err.Error())
 		return
 	}
-	for path, body := range this.result {
-		file_dir := filepath.Dir(path)
-		urls := regex.FindAllStringSubmatch(body, -1)
+	for i, assetFile := range this.result {
+		file_dir := filepath.Dir(assetFile.Path)
+		urls := regex.FindAllStringSubmatch(assetFile.Body, -1)
 		for _, mathces := range urls {
 			url_dir := mathces[1]
 			abs_path := filepath.Join("/", file_dir, url_dir)
-			body = strings.Replace(body, url_dir, abs_path, -1)
+			assetFile.Body = strings.Replace(assetFile.Body, url_dir, abs_path, -1)
 		}
-		this.result[path] = body
+		this.result[i] = assetFile
 	}
 }
 
@@ -259,8 +258,8 @@ func (this *Asset) buildHTML() template.HTML {
 		return ""
 	}
 	var result template.HTML
-	for path, _ := range this.result {
-		result += tag_fn("/" + path)
+	for _, assetFile := range this.result {
+		result += tag_fn("/" + assetFile.Path)
 	}
 	return result
 }
