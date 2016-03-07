@@ -7,10 +7,12 @@ import (
 	"os/exec"
 	"os"
 	"crypto/md5"
+	"bytes"
 )
 
 const SASS_EXTENSION = ".sass"
 const SASS_EXTENSION_LEN = len(SASS_EXTENSION)
+
 var sass_built_files_dir = filepath.Join(beego_assets.Config.TempDir, "sass")
 
 func init() {
@@ -43,10 +45,13 @@ func BuildSassAsset(asset *beego_assets.Asset) error {
 
 			new_file_path := filepath.Join(sass_built_files_dir, file_name + "-" + md5_s + "_build.css")
 			ex := exec.Command("sass", src, new_file_path)
-			ex.Start()
-			err = ex.Wait()
+			var out bytes.Buffer
+			ex.Stderr = &out
+			err = ex.Run()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Error building SASS file:")
+				fmt.Println(out.String())
+				continue
 			}
 			asset.Include_files[i] = new_file_path
 
