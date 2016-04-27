@@ -1,7 +1,9 @@
 package less
 
 import (
-	"github.com/saturn4er/beego-assets"
+	// "github.com/saturn4er/beego-assets"
+	"beego-assets"
+	"github.com/astaxie/beego"
 	"path/filepath"
 	"fmt"
 	"os/exec"
@@ -16,7 +18,8 @@ const SCSS_EXTENSION_LEN = len(SCSS_EXTENSION)
 var scss_built_files_dir = filepath.Join(beego_assets.Config.TempDir, "scss")
 
 func init() {
-	_, err := exec.LookPath("sass")
+	beego.Debug("scsssssssss")
+	_, err := exec.LookPath("node-sass")
 	if err != nil {
 		beego_assets.Error("Please, install Node.js sass compiler: npm install node-sass -g")
 		return
@@ -30,7 +33,9 @@ func init() {
 	}
 }
 func BuildScssAsset(asset *beego_assets.Asset) error {
+	beego.Debug(fmt.Sprintf("scsssssssss building %v", asset.Include_files))
 	for i, src := range asset.Include_files {
+		beego.Debug(fmt.Sprintf("included: %s", src))
 		ext := filepath.Ext(src)
 		if ext == SCSS_EXTENSION {
 			stat, err := os.Stat(src)
@@ -43,7 +48,7 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 			file := filepath.Base(src)
 			file_name := file[:len(file) - SCSS_EXTENSION_LEN]
 			new_file_path := filepath.Join(scss_built_files_dir, file_name + "-" + md5_s + "_build.css")
-			ex := exec.Command("sass", "--scss", src, new_file_path)
+			ex := exec.Command("node-sass", "--scss", src, new_file_path)
 			var out bytes.Buffer
 			ex.Stderr = &out
 			err = ex.Run()

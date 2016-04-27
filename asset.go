@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"github.com/tdewolff/minify"
 	"regexp"
+	"github.com/astaxie/beego"
+	"fmt"
 )
 
 var minifier = minify.New()
@@ -64,6 +66,7 @@ func (this *Asset) parse() error {
 // Search for asset file in Config.AssetsLocations locations list
 func (this *Asset) findAssetPath() (string, error) {
 	for _, value := range Config.AssetsLocations {
+		beego.Debug(fmt.Sprintf("value:::%v", value))
 		file_path := path.Join(value, this.assetName) + this.assetExt()
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 			if _, err := os.Stat(file_path); !os.IsNotExist(err) {
@@ -72,7 +75,7 @@ func (this *Asset) findAssetPath() (string, error) {
 			return file_path, nil
 		}
 	}
-	return "", errors.New("Can't find asset ")
+	return "", errors.New(fmt.Sprintf("Can't find asset %v", this))
 }
 
 // Search for asset included file in Config.PublicDirs locations list.

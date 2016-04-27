@@ -6,6 +6,7 @@ import (
 )
 
 func init() {
+	beego.Debug("yoooooo")
 	Logger.SetLogger("console", "")
 	beego.AddFuncMap("asset_js", getAssetHelper(ASSET_JAVASCRIPT))
 	beego.AddFuncMap("asset_css", getAssetHelper(ASSET_STYLESHEET))
