@@ -51,6 +51,7 @@ func (this *Asset) parse() error {
 			prefix = "/*= require "
 		}
 		if strings.HasPrefix(line, prefix) {
+			beego.Debug("got include: %s", line)
 			include_file := line[len(prefix):]
 			file, err := this.findIncludeFilePath(include_file)
 			if err != nil {
@@ -65,9 +66,11 @@ func (this *Asset) parse() error {
 
 // Search for asset file in Config.AssetsLocations locations list
 func (this *Asset) findAssetPath() (string, error) {
+	beego.Debug(fmt.Sprintf("finding in %v", Config.AssetsLocations))
 	for _, value := range Config.AssetsLocations {
-		beego.Debug(fmt.Sprintf("value:::%v", value))
+		// beego.Debug(fmt.Sprintf("included %v || %v", this.Include_files, this.result))
 		file_path := path.Join(value, this.assetName) + this.assetExt()
+		beego.Debug(fmt.Sprintf("include %s || %v || %v", file_path, this.Include_files, this.result))
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 			if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 				return file_path, nil
@@ -75,7 +78,7 @@ func (this *Asset) findAssetPath() (string, error) {
 			return file_path, nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Can't find asset %v", this))
+	return "", errors.New(fmt.Sprintf("Can't find asset: %v", this))
 }
 
 // Search for asset included file in Config.PublicDirs locations list.

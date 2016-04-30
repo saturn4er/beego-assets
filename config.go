@@ -2,7 +2,9 @@ package beego_assets
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/config"
+	// "github.com/astaxie/beego/config"
+	"github.com/u007/go_config"
+	// "github.com/go-ini/ini"
 	"fmt"
 	"strings"
 )
@@ -34,30 +36,30 @@ type assetPipelineConfig struct {
 }
 
 func (this *assetPipelineConfig) Parse(filename string) {
-	config, err := config.NewConfig("ini", filename)
+	// config, err := config.NewConfig("ini", filename)
+	config, err := go_config.NewConfigLoader("ini", filename)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	
 	Config.Runmode = beego.AppConfig.DefaultString("runmode", "dev")
-	locations := config.DefaultString("assets_dirs", "")
+	locations := config.String(Config.Runmode, "assets_dirs", "")
+	beego.Debug(fmt.Sprintf("asset locations:: env: %s || %v || direct minify_js: %s", Config.Runmode, locations, 
+		config.String(Config.Runmode, "minify_js", "")))
 	Config.AssetsLocations = strings.Split(locations, ",")
 
-	public_dirs := config.DefaultString("public_dirs", "")
+	public_dirs := config.String(Config.Runmode, "public_dirs", "")
 	Config.PublicDirs = strings.Split(public_dirs, ",")
-	Config.TempDir = config.DefaultString("temp_dir", "static/assets")
+	Config.TempDir = config.String(Config.Runmode, "temp_dir", "")
 
-	runmode_params, err := config.GetSection(Config.Runmode)
-	if err != nil {
-		Logger.Warn("Can't get section \"%v\" from config asset-pipeline.conf. Using default params", Config.Runmode)
-	}
-	getBoolFromMap(&runmode_params, "minify_css", &Config.MinifyCSS, false)
-	getBoolFromMap(&runmode_params, "minify_js", &Config.MinifyJS, false)
-	getBoolFromMap(&runmode_params, "combine_css", &Config.CombineCSS, false)
-	getBoolFromMap(&runmode_params, "combine_js", &Config.CombineJS, false)
-	getBoolFromMap(&runmode_params, "production_mode", &Config.ProductionMode, false)
-
+	Config.MinifyCSS = config.Boolean(Config.Runmode, "minify_css", false)
+	Config.MinifyJS = config.Boolean(Config.Runmode, "minify_js", false)
+	Config.CombineCSS = config.Boolean(Config.Runmode, "combine_css", false)
+	Config.CombineJS = config.Boolean(Config.Runmode, "combine_js", false)
+	Config.ProductionMode = config.Boolean(Config.Runmode, "production_mode", false)
 }
+
 func getBoolFromMap(array *map[string]string, key string, variable *bool, default_value bool) {
 	if val, ok := (*array)[key]; ok {
 		_val := strings.ToLower(val)
@@ -76,4 +78,3 @@ func init() {
 }
 
 var Config assetPipelineConfig
-

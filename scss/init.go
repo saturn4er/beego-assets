@@ -18,7 +18,6 @@ const SCSS_EXTENSION_LEN = len(SCSS_EXTENSION)
 var scss_built_files_dir = filepath.Join(beego_assets.Config.TempDir, "scss")
 
 func init() {
-	beego.Debug("scsssssssss")
 	_, err := exec.LookPath("node-sass")
 	if err != nil {
 		beego_assets.Error("Please, install Node.js sass compiler: npm install node-sass -g")
@@ -33,10 +32,10 @@ func init() {
 	}
 }
 func BuildScssAsset(asset *beego_assets.Asset) error {
-	beego.Debug(fmt.Sprintf("scsssssssss building %v", asset.Include_files))
+	beego.Debug(fmt.Sprintf("scsssssssss building %v", asset))
 	for i, src := range asset.Include_files {
-		beego.Debug(fmt.Sprintf("included: %s", src))
 		ext := filepath.Ext(src)
+		beego.Debug(fmt.Sprintf("included: %i: %s, ext: %s", i, src, ext))
 		if ext == SCSS_EXTENSION {
 			stat, err := os.Stat(src)
 			if err != nil {
