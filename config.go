@@ -45,19 +45,31 @@ func (this *assetPipelineConfig) Parse(filename string) {
 	
 	Config.Runmode = beego.AppConfig.DefaultString("runmode", "dev")
 	locations := config.String(Config.Runmode, "assets_dirs", "")
-	beego.Debug(fmt.Sprintf("asset locations:: env: %s || %v || direct minify_js: %s", Config.Runmode, locations, 
-		config.String(Config.Runmode, "minify_js", "")))
+	if (locations == "") {
+		fmt.Errorf("assets_dirs not set, please set in conf/asset-pipeline.conf")
+		return
+	}
+	// beego.Debug(fmt.Sprintf("asset locations:: env: %s || %v || direct minify_js: %s", Config.Runmode, locations, 
+		// config.String(Config.Runmode, "minify_js", "")))
 	Config.AssetsLocations = strings.Split(locations, ",")
-
+	
 	public_dirs := config.String(Config.Runmode, "public_dirs", "")
+	if (public_dirs == "") {
+		fmt.Errorf("public_dirs not set, please set in conf/asset-pipeline.conf")
+		return
+	}
 	Config.PublicDirs = strings.Split(public_dirs, ",")
 	Config.TempDir = config.String(Config.Runmode, "temp_dir", "")
-
+	if (Config.TempDir == "") {
+		fmt.Errorf("temp_dir not set, please set in conf/asset-pipeline.conf")
+		return
+	}
 	Config.MinifyCSS = config.Boolean(Config.Runmode, "minify_css", false)
 	Config.MinifyJS = config.Boolean(Config.Runmode, "minify_js", false)
 	Config.CombineCSS = config.Boolean(Config.Runmode, "combine_css", false)
 	Config.CombineJS = config.Boolean(Config.Runmode, "combine_js", false)
 	Config.ProductionMode = config.Boolean(Config.Runmode, "production_mode", false)
+	
 }
 
 func getBoolFromMap(array *map[string]string, key string, variable *bool, default_value bool) {
