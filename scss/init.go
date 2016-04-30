@@ -45,17 +45,22 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 			file := filepath.Base(src)
 			file_name := file[:len(file) - SCSS_EXTENSION_LEN]
 			new_file_path := filepath.Join(scss_built_files_dir, file_name + "-" + md5_s + "_build.css")
-			ex := exec.Command("node-sass", "--scss", src, new_file_path)
-			var out bytes.Buffer
-			ex.Stderr = &out
-			err = ex.Run()
-			if err != nil {
-				fmt.Println("Error building SCSS file:")
-				fmt.Println(out.String())
-				continue
+			
+			if _, err := os.Stat(new_file_path); os.IsNotExist(err) {
+				beego.Debug("exec:", "node-sass", src, new_file_path)
+				ex := exec.Command("node-sass", src, new_file_path)
+				var out bytes.Buffer
+				ex.Stderr = &out
+				err = ex.Run()
+				if err != nil {
+					fmt.Println("Error building SCSS file:")
+					fmt.Println(out.String())
+					continue
+				}
+			} else {
+				beego.Debug("skipping:", new_file_path)
 			}
 			asset.Include_files[i] = new_file_path
-
 		}
 	}
 	return nil

@@ -10,8 +10,7 @@ import (
 	"bytes"
 )
 
-//TODO
-const COFFEE_EXTENSION = ".es6.js"
+const COFFEE_EXTENSION = ".coffee"
 const COFFEE_EXTENSION_LEN = len(COFFEE_EXTENSION)
 
 func init() {
