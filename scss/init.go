@@ -32,10 +32,8 @@ func init() {
 	}
 }
 func BuildScssAsset(asset *beego_assets.Asset) error {
-	beego.Debug(fmt.Sprintf("scsssssssss building %v", asset))
 	for i, src := range asset.Include_files {
 		ext := filepath.Ext(src)
-		beego.Debug(fmt.Sprintf("included: %i: %s, ext: %s", i, src, ext))
 		if ext == SCSS_EXTENSION {
 			stat, err := os.Stat(src)
 			if err != nil {
