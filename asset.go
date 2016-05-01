@@ -12,7 +12,11 @@ import (
 	"github.com/tdewolff/minify"
 	"regexp"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/cache"
+	_ "github.com/astaxie/beego/cache/redis"
 	"fmt"
+	"strconv"
+	"time"
 )
 
 var minifier = minify.New()
@@ -25,6 +29,8 @@ type Asset struct {
 	needCombine   bool
 	Include_files []string
 	result        []assetFile
+	cache					cache.Cache
+	assetPath     string
 }
 
 // Find asset and parse it
@@ -71,6 +77,7 @@ func (this *Asset) findAssetPath() (string, error) {
 		// beego.Debug(fmt.Sprintf("included %v || %v", this.Include_files, this.result))
 		file_path := path.Join(value, this.assetName) + this.assetExt()
 		// beego.Debug(fmt.Sprintf("include %s || %v || %v", file_path, this.Include_files, this.result))
+		this.assetPath = file_path
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 			if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 				return file_path, nil
@@ -119,9 +126,7 @@ func (this *Asset) build() {
 		}
 	}
 	this.result = this.readAllIncludeFiles()
-	if !this.needCombine && !this.needMinify {
-		return
-	}
+	
 	if this.assetType == ASSET_STYLESHEET {
 		this.replaceRelLinks()
 	}
@@ -150,6 +155,29 @@ func (this *Asset) build() {
 		}
 	}
 	this.writeResultToFiles()
+}
+
+func copyFileContents(src, dst string) (err error, cotent string) {
+	in, err := os.Open(src)
+	if err != nil {
+		return
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+	    return
+	}
+	defer func() {
+		cerr := out.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+	if _, err = io.Copy(out, in); err != nil {
+    return
+	}
+	err = out.Sync()
+	return
 }
 
 func (this *Asset) minify() {
@@ -189,10 +217,67 @@ func (this *Asset) combine() {
 	this.result = []assetFile{assetFile{Path:combined_path, Body:s_result}}
 }
 
+func (this *Asset) cacheInit() error {
+	if this.cache == nil {
+		bm, err := cache.NewCache("redis", `{"conn":":6379"}`)  
+		this.cache = bm
+		if err != nil{
+			beego.Error("cache init error: ", err.Error())
+			return fmt.Errorf("cache init error: ", err.Error())
+		}
+	}
+	return nil
+}
+
+func (this *Asset) fileChanged(path string) bool {
+	cache_size, cache_time, _, err := this.fileCacheStat(path)
+	if err != nil {
+		return true
+	}
+	
+	fi, err := os.Stat(path)
+	if err != nil {
+	  Warning("Unable to stat asset %s", path)// Could not obtain stat, handle error
+		return true
+	}
+	if fi.Size() != cache_size || fi.ModTime() != cache_time  {
+		return true
+	}
+	return false
+}
+
+func (this *Asset) fileCacheStat(path string) (file_size int64, file_modtime time.Time, file_dest string, err error) {
+	this.cacheInit()
+	name := fmt.Sprintf("file_%s", path)
+	if this.cache.IsExist(name) {
+		beego.Debug("Cache exists", name)
+		cache := this.cache.Get(name).(string)
+		res   := strings.Split(cache, "|")
+		beego.Debug(fmt.Sprintf("result: %q", res))
+		file_size, err := strconv.ParseInt(res[0], 10, 64)
+		if (err != nil) {
+			Warning("fileCacheStat: can't get size from cache for %s", path)
+		}
+		beego.Debug("cache", cache)
+		file_modtime := time.Time{} //TODO
+		file_dest  := res[2]
+		return file_size, file_modtime, file_dest, nil
+	} else {
+		beego.Debug("Cache missing", name)
+		return 0, time.Time{}, "", fmt.Errorf("File missing: %f", path)
+	}
+}
+
+func (this *Asset) cacheFile(path string, stat os.FileInfo, new_file_path string) {
+	this.cacheInit()
+	name := fmt.Sprintf("file_%s", path)
+	this.cache.Put(name, fmt.Sprintf("%d|%s|%s", stat.Size(), stat.ModTime(), new_file_path), 60 * 60 * 24 * 365)
+}
+
 // Read all files from Include files and return map[path_to_file]body
 func (this *Asset) readAllIncludeFiles() []assetFile {
 	result := []assetFile{}
-
+	
 	for _, path := range this.Include_files {
 		file, err := os.OpenFile(path, os.O_RDONLY, 0766)
 		if err != nil {
@@ -207,6 +292,42 @@ func (this *Asset) readAllIncludeFiles() []assetFile {
 			}
 			file_body += string(line) + "\n"
 		}
+		
+		//create md5 version for js
+		if this.assetType == ASSET_JAVASCRIPT {
+			if !this.fileChanged(path){
+				beego.Debug("asset not changed", path)
+				_, _, path, err = this.fileCacheStat(path)
+			} else {
+				// file changed or is new
+				file_name := filepath.Base(path)
+				file_ext := filepath.Ext(file_name)
+				file_name = file_name[:len(file_name) - len(file_ext)]
+				file_hash := GetAssetFileHash(&file_body)
+				new_file_path := filepath.Join(Config.TempDir, file_name + "-" + file_hash + file_ext)
+				beego.Debug("Writing destination", new_file_path)
+				f, err := os.Create(new_file_path)
+				if err != nil {
+					beego.Error("Error creating JS", err.Error())
+					continue
+				}
+				_, err = f.WriteString(file_body)
+				if err != nil {
+					beego.Error("Error copying JS", err.Error())
+					continue
+				}
+				fi, err := os.Stat(path)
+				if err != nil {
+				  Warning("Unable to stat asset %s", path)// Could not obtain stat, handle error
+					continue
+				}
+				
+				this.cacheFile(path, fi, new_file_path)
+				path = new_file_path
+			}
+			
+		} //is js
+		
 		result = append(result, assetFile{Path:path, Body:file_body})
 		file.Close()
 	}
