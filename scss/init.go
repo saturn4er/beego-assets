@@ -3,7 +3,6 @@ package less
 import (
 	// "github.com/saturn4er/beego-assets"
 	"beego-assets"
-	"github.com/astaxie/beego"
 	"path/filepath"
 	"fmt"
 	"os/exec"
@@ -48,7 +47,7 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 			new_file_path := filepath.Join(scss_built_files_dir, file_name + "-" + md5_s + "_build.css")
 			
 			if _, err := os.Stat(new_file_path); os.IsNotExist(err) {
-				beego.Debug("exec:", "node-sass", src, new_file_path)
+				// beego_assets.Debug("exec: %s %s %s", "node-sass", src, new_file_path)
 				ex := exec.Command("node-sass", src, new_file_path)
 				var out bytes.Buffer
 				ex.Stderr = &out
@@ -59,7 +58,7 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 					continue
 				}
 			} else {
-				beego.Debug("skipping:", new_file_path)
+				beego_assets.Debug("skipping: %s", new_file_path)
 			}
 			asset.Include_files[i] = new_file_path
 		} else if (ext == ".css") {
@@ -94,7 +93,8 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 					}
 				}()
 				if _, err = io.Copy(out, in); err != nil {
-			    return
+					beego_assets.Warning("Unable to copy %s", err.Error())
+					continue
 				}
 				err = out.Sync()
 				if (err != nil) {
@@ -102,7 +102,7 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 					continue
 				}
 			} else {
-				beego.Debug("skipping:", new_file_path)
+				beego_assets.Debug("skipping: %s", new_file_path)
 			}
 			asset.Include_files[i] = new_file_path
 		}

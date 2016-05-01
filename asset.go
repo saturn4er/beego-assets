@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"github.com/tdewolff/minify"
 	"regexp"
-	"github.com/astaxie/beego"
 	"github.com/u007/beego-cache"
 	"fmt"
 )
@@ -54,7 +53,7 @@ func (this *Asset) parse() error {
 			prefix = "/*= require "
 		}
 		if strings.HasPrefix(line, prefix) {
-			beego.Debug("asset:", line)
+			Debug("asset: %s", line)
 			include_file := line[len(prefix):]
 			file, err := this.findIncludeFilePath(include_file)
 			if err != nil {
@@ -69,11 +68,11 @@ func (this *Asset) parse() error {
 
 // Search for asset file in Config.AssetsLocations locations list
 func (this *Asset) findAssetPath() (string, error) {
-	// beego.Debug(fmt.Sprintf("finding in %v", Config.AssetsLocations))
+	// Debug("finding in %v", Config.AssetsLocations)
 	for _, value := range Config.AssetsLocations {
-		// beego.Debug(fmt.Sprintf("included %v || %v", this.Include_files, this.result))
+		// Debug("included %v || %v", this.Include_files, this.result)
 		file_path := path.Join(value, this.assetName) + this.assetExt()
-		// beego.Debug(fmt.Sprintf("include %s || %v || %v", file_path, this.Include_files, this.result))
+		// Debug("include %s || %v || %v", file_path, this.Include_files, this.result))
 		this.assetPath = file_path
 		if _, err := os.Stat(file_path); !os.IsNotExist(err) {
 			if _, err := os.Stat(file_path); !os.IsNotExist(err) {
@@ -241,7 +240,7 @@ func (this *Asset) readAllIncludeFiles() []assetFile {
 		//create md5 version for js
 		if this.assetType == ASSET_JAVASCRIPT {
 			if !beego_cache.GetCache().FileChanged(path){
-				beego.Debug("asset not changed", path)
+				Debug("asset not changed: %s", path)
 				_, _, path, err = beego_cache.GetCache().FileCacheStat(path)
 			} else {
 				// file changed or is new
@@ -250,15 +249,15 @@ func (this *Asset) readAllIncludeFiles() []assetFile {
 				file_name = file_name[:len(file_name) - len(file_ext)]
 				file_hash := GetAssetFileHash(&file_body)
 				new_file_path := filepath.Join(Config.TempDir, file_name + "-" + file_hash + file_ext)
-				beego.Debug("Writing destination", new_file_path)
+				Debug("Writing destination %s", new_file_path)
 				f, err := os.Create(new_file_path)
 				if err != nil {
-					beego.Error("Error creating JS", err.Error())
+					Error("Error creating JS", err.Error())
 					continue
 				}
 				_, err = f.WriteString(file_body)
 				if err != nil {
-					beego.Error("Error copying JS", err.Error())
+					Error("Error copying JS", err.Error())
 					continue
 				}
 				fi, err := os.Stat(path)
