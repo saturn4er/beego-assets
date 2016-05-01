@@ -240,9 +240,9 @@ func (this *Asset) readAllIncludeFiles() []assetFile {
 		
 		//create md5 version for js
 		if this.assetType == ASSET_JAVASCRIPT {
-			if !beego_cache.GetCache().fileChanged(path){
+			if !beego_cache.GetCache().FileChanged(path){
 				beego.Debug("asset not changed", path)
-				_, _, path, err = beego_cache.GetCache().fileCacheStat(path)
+				_, _, path, err = beego_cache.GetCache().FileCacheStat(path)
 			} else {
 				// file changed or is new
 				file_name := filepath.Base(path)
@@ -267,7 +267,7 @@ func (this *Asset) readAllIncludeFiles() []assetFile {
 					continue
 				}
 				
-				beego_cache.GetCache().cacheFile(path, fi, new_file_path)
+				beego_cache.GetCache().CacheFile(path, fi, new_file_path)
 				path = new_file_path
 			}
 			
