@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os/exec"
 	"os"
+	"io"
 	"crypto/md5"
 	"bytes"
 )
@@ -55,6 +56,49 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 				if err != nil {
 					fmt.Println("Error building SCSS file:")
 					fmt.Println(out.String())
+					continue
+				}
+			} else {
+				beego.Debug("skipping:", new_file_path)
+			}
+			asset.Include_files[i] = new_file_path
+		} else if (ext == ".css") {
+			stat, err := os.Stat(src)
+			if err != nil {
+				beego_assets.Error("Can't get stat of file %s. %v", src, err)
+				continue
+			}
+			md5 := md5.Sum([]byte(stat.ModTime().String() + src))
+			md5_s := fmt.Sprintf("%x", md5)
+			file := filepath.Base(src)
+			file_name := file[:len(file) - 4]
+			new_file_path := filepath.Join(scss_built_files_dir, file_name + "-" + md5_s + "_build.css")
+			
+			if _, err := os.Stat(new_file_path); os.IsNotExist(err) {
+				// plain copy
+				in, err := os.Open(src)
+				if err != nil {
+					beego_assets.Warning("Unable to open source %s", src)
+					continue
+				}
+				defer in.Close()
+				out, err := os.Create(new_file_path)
+				if err != nil {
+					beego_assets.Warning("Unable to create destination %s", new_file_path)
+					continue
+				}
+				defer func() {
+					cerr := out.Close()
+					if err == nil {
+						err = cerr
+					}
+				}()
+				if _, err = io.Copy(out, in); err != nil {
+			    return
+				}
+				err = out.Sync()
+				if (err != nil) {
+					beego_assets.Warning("Unable to copy %s", src)
 					continue
 				}
 			} else {
