@@ -130,6 +130,11 @@ func (this *Asset) build() {
 	if this.assetType == ASSET_STYLESHEET {
 		this.replaceRelLinks()
 	}
+	
+	if !this.needMinify && !this.needCombine {
+		return
+	}
+	
 	if cbcks, ok := Config.preBuildCallbacks[this.assetType]; ok {
 		for _, value := range cbcks {
 			err := value(this.result, this)
@@ -229,9 +234,37 @@ func (this *Asset) cacheInit() error {
 	return nil
 }
 
+func (this *Asset) cache_name(name string) string {
+	res := strings.Replace(name, "/", ":", -1)
+	return res
+}
+
+func (this *Asset) cache_get(name string) string {
+	this.cacheInit()
+	result := fmt.Sprintf("%s", this.cache.Get(this.cache_name(name)))
+	// beego.Debug("cache_get", name, fmt.Sprintf("%q", result))
+	return result
+}
+
+func (this *Asset) cache_set(name string, value string, timeout time.Duration) error {
+	this.cacheInit()
+	err := this.cache.Put(this.cache_name(name), value, timeout)
+	return err
+}
+
+func (this *Asset) cache_set_max(name string, value string) error {
+	return this.cache_set(name, value, 60 * 60 * 24 * 365 * time.Second)
+}
+
+func (this *Asset) cache_exists(name string) bool {
+	this.cacheInit()
+	return this.cache.IsExist(this.cache_name(name))
+}
+
 func (this *Asset) fileChanged(path string) bool {
-	cache_size, cache_time, _, err := this.fileCacheStat(path)
+	cache_size, cache_time, cache_new_file, err := this.fileCacheStat(path)
 	if err != nil {
+		beego.Debug("filecachestat error:", err.Error())
 		return true
 	}
 	
@@ -243,23 +276,33 @@ func (this *Asset) fileChanged(path string) bool {
 	if fi.Size() != cache_size || fi.ModTime() != cache_time  {
 		return true
 	}
+	
+	//ensure file exists
+	if _, err := os.Stat(cache_new_file); os.IsNotExist(err) {
+		Warning("Cache file missing", cache_new_file)
+		return true
+	}
+	
 	return false
 }
 
 func (this *Asset) fileCacheStat(path string) (file_size int64, file_modtime time.Time, file_dest string, err error) {
-	this.cacheInit()
 	name := fmt.Sprintf("file_%s", path)
-	if this.cache.IsExist(name) {
-		beego.Debug("Cache exists", name)
-		cache := this.cache.Get(name).(string)
+	if this.cache_exists(name) {
+		// beego.Debug("Cache exists", name)
+		cache := this.cache_get(name)
 		res   := strings.Split(cache, "|")
-		beego.Debug(fmt.Sprintf("result: %q", res))
+		// beego.Debug(fmt.Sprintf("result: %q", res))
 		file_size, err := strconv.ParseInt(res[0], 10, 64)
 		if (err != nil) {
 			Warning("fileCacheStat: can't get size from cache for %s", path)
 		}
-		beego.Debug("cache", cache)
-		file_modtime := time.Time{} //TODO
+		// beego.Debug("cache:", cache)
+		// https://gobyexample.com/time-formatting-parsing
+		file_modtime, err := time.Parse(time.RFC3339, res[1]) //TODO
+		if (err != nil) {
+			Warning("fileCacheStat: mod time from cache: %s: %s", res[1], err.Error())
+		}
 		file_dest  := res[2]
 		return file_size, file_modtime, file_dest, nil
 	} else {
@@ -271,7 +314,10 @@ func (this *Asset) fileCacheStat(path string) (file_size int64, file_modtime tim
 func (this *Asset) cacheFile(path string, stat os.FileInfo, new_file_path string) {
 	this.cacheInit()
 	name := fmt.Sprintf("file_%s", path)
-	this.cache.Put(name, fmt.Sprintf("%d|%s|%s", stat.Size(), stat.ModTime(), new_file_path), 60 * 60 * 24 * 365)
+	err := this.cache_set_max(name, fmt.Sprintf("%d|%s|%s", stat.Size(), stat.ModTime().Format(time.RFC3339), new_file_path))
+	if err != nil {
+		beego.Debug("error set cacheFile", err.Error())
+	}
 }
 
 // Read all files from Include files and return map[path_to_file]body
