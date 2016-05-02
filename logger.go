@@ -1,17 +1,18 @@
 package beego_assets
 
-import "github.com/astaxie/beego/logs"
-
-var Logger = logs.NewLogger(10000)
+import (
+	"github.com/astaxie/beego"
+	"fmt"
+)
 
 const PREFIX = "[ ASSET_PIPELINE ] "
 
 func Debug(format string, v... interface{}) {
-	Logger.Debug(PREFIX + format, v...)
+	beego.Debug(fmt.Sprintf(PREFIX + format, v...))
 }
 func Warning(format string, v... interface{}) {
-	Logger.Warning(PREFIX + format, v...)
+	beego.Warning(fmt.Sprintf(PREFIX + format, v...))
 }
 func Error(format string, v... interface{}) {
-	Logger.Error(PREFIX + format, v...)
+	beego.Error(fmt.Sprintf(PREFIX + format, v...))
 }
