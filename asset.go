@@ -35,11 +35,13 @@ func (this *Asset) parse() error {
 	if err != nil {
 		return err
 	}
+	
 	file, err := os.OpenFile(assetPath, os.O_RDONLY, 0666)
 	if err != nil {
 		return err
 	}
 	asset_reader := bufio.NewReader(file)
+	
 	for {
 		_line, _, err := asset_reader.ReadLine()
 		if err == io.EOF {
@@ -62,7 +64,8 @@ func (this *Asset) parse() error {
 			}
 			this.Include_files = append(this.Include_files, file)
 		}
-	}
+	}//foreach line
+	
 	return nil
 }
 
@@ -337,13 +340,16 @@ func (this *Asset) buildHTML() template.HTML {
 
 func getAsset(assetName string, assetType AssetType) (*Asset, error) {
 	// Check if this asset already built ( only if production mode enabled )
-	if Config.ProductionMode {
-		if v, ok := parsedAssets[assetName]; ok {
-			if asset, ok := v[assetType]; ok {
+	if v, ok := parsedAssets[assetName]; ok {
+		if asset, ok := v[assetType]; ok {
+			if !beego_cache.GetCache().FileChanged(asset.assetPath) {
+				Debug("Asset from cache %s", asset.assetPath)
 				return asset, nil
 			}
+			Warning("Asset changed %s", asset.assetPath)
 		}
 	}
+	
 	result := new(Asset)
 	result.assetType = assetType
 	result.assetName = assetName
@@ -365,12 +371,12 @@ func getAsset(assetName string, assetType AssetType) (*Asset, error) {
 	err := result.parse()
 	if err == nil {
 		// Add asset to cache ( only if production mode enabled )
-		if Config.ProductionMode {
-			if _, ok := parsedAssets[assetName]; !ok {
-				parsedAssets[assetName] = map[AssetType]*Asset{}
-			}
-			parsedAssets[assetName][assetType] = result
+		if _, ok := parsedAssets[assetName]; !ok {
+			parsedAssets[assetName] = map[AssetType]*Asset{}
 		}
+		parsedAssets[assetName][assetType] = result
+		Debug("Caching asset %s", result.assetPath)
+		beego_cache.GetCache().CacheFile(result.assetPath, nil, "")
 	}
 	result.build()
 	return result, err
