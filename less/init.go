@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os"
 	"crypto/md5"
+	"bytes"
 )
 
 const LESS_EXTENSION = ".less"
@@ -42,10 +43,13 @@ func BuildLessAsset(asset *beego_assets.Asset) error {
 			file_name := file[:len(file) - LESS_EXTENSION_LEN]
 			new_file_path := filepath.Join(less_built_files_dir, file_name + "-" + md5_s + "_build.css")
 			ex := exec.Command("lessc", src, new_file_path)
-			ex.Start()
-			err = ex.Wait()
+			var out bytes.Buffer
+			ex.Stderr = &out
+			err = ex.Run()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Error building LESS file:")
+				fmt.Println(out.String())
+				continue
 			}
 			asset.Include_files[i] = new_file_path
 

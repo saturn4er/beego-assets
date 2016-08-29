@@ -7,9 +7,11 @@ import (
 	"os/exec"
 	"os"
 	"crypto/md5"
+	"bytes"
 )
 
-const COFFEE_EXTENSION = ".coffee"
+//TODO
+const COFFEE_EXTENSION = ".es6.js"
 const COFFEE_EXTENSION_LEN = len(COFFEE_EXTENSION)
 
 func init() {
@@ -38,10 +40,12 @@ func BuildLessAsset(asset *beego_assets.Asset) error {
 			new_file_dir := filepath.Join(beego_assets.Config.TempDir, "coffee");
 			new_file_name := file_name + "-" + md5_s + "_build.js"
 			ex := exec.Command("coffee", "-c", "-o", new_file_dir, src)
-			ex.Start()
-			err = ex.Wait()
+			var out bytes.Buffer
+			ex.Stderr = &out
+			err = ex.Run()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Error building Coffee file:")
+				fmt.Println(out.String())
 				continue
 			}
 			new_file_path := filepath.Join(new_file_dir, new_file_name)
