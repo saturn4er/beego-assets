@@ -1,12 +1,12 @@
 package main
 
 import (
-	_ "github.com/saturn4er/beego-assets"
-	_ "github.com/saturn4er/beego-assets/less"
-	_ "github.com/saturn4er/beego-assets/sass"
-	_ "github.com/saturn4er/beego-assets/scss"
-	_ "github.com/saturn4er/beego-assets/coffee"
-	_ "github.com/saturn4er/beego-assets/example/routers"
+	_ "github.com/gtforge/beego-assets"
+	_ "github.com/gtforge/beego-assets/less"
+	_ "github.com/gtforge/beego-assets/sass"
+	_ "github.com/gtforge/beego-assets/scss"
+	_ "github.com/gtforge/beego-assets/coffee"
+	_ "github.com/gtforge/beego-assets/example/routers"
 	"github.com/astaxie/beego"
 )
 

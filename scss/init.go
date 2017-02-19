@@ -1,7 +1,7 @@
 package less
 
 import (
-	"github.com/saturn4er/beego-assets"
+	"github.com/gtforge/beego-assets"
 	"path/filepath"
 	"fmt"
 	"os/exec"

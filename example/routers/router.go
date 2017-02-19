@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"github.com/saturn4er/beego-assets/example/controllers"
+	"github.com/gtforge/beego-assets/example/controllers"
 	"github.com/astaxie/beego"
 )
 

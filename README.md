@@ -1,18 +1,18 @@
-[![Build Status](https://travis-ci.org/saturn4er/beego-assets.svg?branch=master)](https://travis-ci.org/saturn4er/beego-assets)
+[![Build Status](https://travis-ci.org/gtforge/beego-assets.svg?branch=master)](https://travis-ci.org/gtforge/beego-assets)
 ## Description
 Rails-style assets for golang beego web framework
 
 ## Installation
 To install library, create config in ./conf/asset-pipeline.conf and enter into the console:
 
-	go get github.com/saturn4er/beego-assets
+	go get github.com/gtforge/beego-assets
 
 	
 ## Usage
 Add following lines to your main file
  
 	import (
-		_ "github.com/saturn4er/beego-assets"
+		_ "github.com/gtforge/beego-assets"
 	)
 
 Put basic config to ./conf/asset-pipeline.conf
@@ -32,10 +32,10 @@ First, install corresponding node modules
 	
 After that you can use less by adding following line to your imports
 
-	Less: import _ "github.com/saturn4er/beego-assets/less"
-	Sass: import _ "github.com/saturn4er/beego-assets/sass"
-	Scss: import _ "github.com/saturn4er/beego-assets/scss"
-	Coffeescript: import _ "github.com/saturn4er/beego-assets/coffee"
+	Less: import _ "github.com/gtforge/beego-assets/less"
+	Sass: import _ "github.com/gtforge/beego-assets/sass"
+	Scss: import _ "github.com/gtforge/beego-assets/scss"
+	Coffeescript: import _ "github.com/gtforge/beego-assets/coffee"
 
 ## Asset format
 Asset extension sholud be .js or .css. Depends on include_tag function<br>
