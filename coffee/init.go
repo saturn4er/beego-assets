@@ -55,7 +55,6 @@ func BuildCoffeeAsset(asset *beegoAssets.Asset) error {
 				beegoAssets.Error(err.Error())
 			}
 			asset.IncludeFiles[i] = newFilePath
-
 		}
 	}
 	return nil

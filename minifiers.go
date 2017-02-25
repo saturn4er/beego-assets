@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/js"
 )
+
+var minifier = minify.New()
 
 //MinifyStylesheet - Minify css file
 func MinifyStylesheet(body string) (string, error) {
@@ -24,7 +27,6 @@ func MinifyStylesheet(body string) (string, error) {
 func MinifyJavascript(body string) (string, error) {
 	bResult := bytes.NewBuffer([]byte{})
 	bodyReader := strings.NewReader(body)
-
 	err := js.Minify(minifier, bResult, bodyReader, map[string]string{})
 	if err != nil {
 		return "", fmt.Errorf("Minification error: %v", err)
