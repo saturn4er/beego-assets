@@ -1,36 +1,45 @@
-package beego_assets
+package beegoAssets
 
 import (
-	"fmt"
 	"crypto/md5"
+	"fmt"
 )
 
-func SetAssetFileExtension(extension string, asset_type AssetType) {
-	Config.extensions[asset_type] = append(Config.extensions[asset_type], extension)
+// SetAssetFileExtension - add new Asset type
+func SetAssetFileExtension(extension string, assetType assetsType) {
+	Config.extensions[assetType] = append(Config.extensions[assetType], extension)
 }
-func SetPreLoadCallback(asset_type AssetType, cb preLoadCallback) {
-	if _, ok := Config.preLoadCallbacks[asset_type]; !ok {
-		Config.preLoadCallbacks[asset_type] = []preLoadCallback{}
+
+// SetPreLoadCallback - set callback on preload assets
+func SetPreLoadCallback(assetType assetsType, cb preLoadCallback) {
+	if _, ok := Config.preLoadCallbacks[assetType]; !ok {
+		Config.preLoadCallbacks[assetType] = []preLoadCallback{}
 	}
-	Config.preLoadCallbacks[asset_type] = append(Config.preLoadCallbacks[asset_type], cb)
+	Config.preLoadCallbacks[assetType] = append(Config.preLoadCallbacks[assetType], cb)
 }
-func SetPreBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {
-	if _, ok := Config.preBuildCallbacks[asset_type]; !ok {
-		Config.preBuildCallbacks[asset_type] = []pre_afterBuildCallback{}
+
+// SetPreBuildCallback - set callback on PreBuild assets
+func SetPreBuildCallback(assetType assetsType, cb preAfterBuildCallback) {
+	if _, ok := Config.preBuildCallbacks[assetType]; !ok {
+		Config.preBuildCallbacks[assetType] = []preAfterBuildCallback{}
 	}
-	Config.preBuildCallbacks[asset_type] = append(Config.preBuildCallbacks[asset_type], cb)
+	Config.preBuildCallbacks[assetType] = append(Config.preBuildCallbacks[assetType], cb)
 }
-func SetAfterBuildCallback(asset_type AssetType, cb pre_afterBuildCallback) {
-	if _, ok := Config.afterBuildCallbacks[asset_type]; !ok {
-		Config.afterBuildCallbacks[asset_type] = []pre_afterBuildCallback{}
+
+// SetAfterBuildCallback - set callback on after build assets
+func SetAfterBuildCallback(assetType assetsType, cb preAfterBuildCallback) {
+	if _, ok := Config.afterBuildCallbacks[assetType]; !ok {
+		Config.afterBuildCallbacks[assetType] = []preAfterBuildCallback{}
 	}
-	Config.afterBuildCallbacks[asset_type] = append(Config.afterBuildCallbacks[asset_type], cb)
+	Config.afterBuildCallbacks[assetType] = append(Config.afterBuildCallbacks[assetType], cb)
 }
+
+// SetMinifyCallback -
 func SetMinifyCallback(extension string, cb minifyFileCallback) {
 	Config.minifyCallbacks[extension] = cb
 }
-func GetAssetFileHash(body *string) (string) {
-	b_md5 := md5.Sum([]byte(*body))
-	md5 := fmt.Sprintf("%x", b_md5)
-	return md5
+
+// GetAssetFileHash - get hash(fingerprint) file by body
+func GetAssetFileHash(body *string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(*body)))
 }

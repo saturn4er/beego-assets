@@ -1,12 +1,12 @@
-package beego_assets
+package beegoAssets
 import (
 "fmt"
 "html/template"
 )
 
-func js_tag(location string) template.HTML {
+func jsTag(location string) template.HTML {
 	return template.HTML(fmt.Sprintf("<script type=text/javascript src=\"%s\"></script>", location))
 }
-func css_tag(location string) template.HTML {
+func cssTag(location string) template.HTML {
 	return template.HTML(fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\"> ", location))
 }

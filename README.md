@@ -98,7 +98,7 @@ You can define different parameters for different runmodes, which are defined in
 ## API
 - SetAssetFileExtension - add your own extension to files finder
 	- extension string	- Extension name, with point.(Ex. ".js")
-	- asset_type AssetType	- beego_assets.ASSET_STYLESHEET / beego_assets.ASSET_JAVASCRIPT
+	- asset_type AssetType	- beegoAssets.AssetStylesheet / beegoAssets.AssetJavascript
 	
 - SetPreLoadCallback  - define pre-load callback for assets. "cb" will be executed before loading assets files to memory.
 	- asset_type AssetType

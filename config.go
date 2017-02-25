@@ -1,39 +1,52 @@
-package beego_assets
+package beegoAssets
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/config"
 	"fmt"
 	"strings"
+
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/config"
 )
 
 type assetPipelineConfig struct {
-	Runmode             string
+	Runmode string
 	// Paths to assets
-	AssetsLocations     []string
+	AssetsLocations []string
 	// Paths to js/css files
-	PublicDirs          []string
+	PublicDirs []string
 	// Path to store compiled assets
-	TempDir             string
+	TempDir string
 
 	// Flags
-	MinifyCSS           bool
-	MinifyJS            bool
-	CombineCSS          bool
-	CombineJS           bool
-	ProductionMode      bool
+	MinifyCSS      bool
+	MinifyJS       bool
+	CombineCSS     bool
+	CombineJS      bool
+	ProductionMode bool
 
-	// Association of AssetType->Array of extensions
-	extensions          map[AssetType][]string
+	// Association of assetsType->Array of extensions
+	extensions map[assetsType][]string
 
 	// callbacks
-	preLoadCallbacks    map[AssetType][]preLoadCallback
-	preBuildCallbacks   map[AssetType][]pre_afterBuildCallback
+	preLoadCallbacks    map[assetsType][]preLoadCallback
+	preBuildCallbacks   map[assetsType][]preAfterBuildCallback
 	minifyCallbacks     map[string]minifyFileCallback
-	afterBuildCallbacks map[AssetType][]pre_afterBuildCallback
+	afterBuildCallbacks map[assetsType][]preAfterBuildCallback
 }
 
-func (this *assetPipelineConfig) Parse(filename string) {
+// Config - assets pipeline configuration
+var Config assetPipelineConfig
+
+func init() {
+	Config.Parse("./conf/Asset-pipeline.conf")
+	Config.extensions = map[assetsType][]string{}
+	Config.preBuildCallbacks = map[assetsType][]preAfterBuildCallback{}
+	Config.minifyCallbacks = map[string]minifyFileCallback{}
+	Config.afterBuildCallbacks = map[assetsType][]preAfterBuildCallback{}
+	Config.preLoadCallbacks = map[assetsType][]preLoadCallback{}
+}
+
+func (a *assetPipelineConfig) Parse(filename string) {
 	config, err := config.NewConfig("ini", filename)
 	if err != nil {
 		fmt.Println(err)
@@ -43,37 +56,26 @@ func (this *assetPipelineConfig) Parse(filename string) {
 	locations := config.DefaultString("assets_dirs", "")
 	Config.AssetsLocations = strings.Split(locations, ",")
 
-	public_dirs := config.DefaultString("public_dirs", "")
-	Config.PublicDirs = strings.Split(public_dirs, ",")
+	publicDirs := config.DefaultString("publicDirs", "")
+	Config.PublicDirs = strings.Split(publicDirs, ",")
 	Config.TempDir = config.DefaultString("temp_dir", "static/assets")
 
-	runmode_params, err := config.GetSection(Config.Runmode)
+	runmodeParams, err := config.GetSection(Config.Runmode)
 	if err != nil {
-		Logger.Warn("Can't get section \"%v\" from config asset-pipeline.conf. Using default params", Config.Runmode)
+		logger.Warn("Can't get section \"%v\" from config Asset-pipeline.conf. Using default params", Config.Runmode)
 	}
-	getBoolFromMap(&runmode_params, "minify_css", &Config.MinifyCSS, false)
-	getBoolFromMap(&runmode_params, "minify_js", &Config.MinifyJS, false)
-	getBoolFromMap(&runmode_params, "combine_css", &Config.CombineCSS, false)
-	getBoolFromMap(&runmode_params, "combine_js", &Config.CombineJS, false)
-	getBoolFromMap(&runmode_params, "production_mode", &Config.ProductionMode, false)
+	getBoolFromMap(&runmodeParams, "minify_css", &Config.MinifyCSS, false)
+	getBoolFromMap(&runmodeParams, "minify_js", &Config.MinifyJS, false)
+	getBoolFromMap(&runmodeParams, "combine_css", &Config.CombineCSS, false)
+	getBoolFromMap(&runmodeParams, "combine_js", &Config.CombineJS, false)
+	getBoolFromMap(&runmodeParams, "production_mode", &Config.ProductionMode, false)
 
 }
-func getBoolFromMap(array *map[string]string, key string, variable *bool, default_value bool) {
+func getBoolFromMap(array *map[string]string, key string, variable *bool, defaultValue bool) {
 	if val, ok := (*array)[key]; ok {
 		_val := strings.ToLower(val)
 		*variable = _val == "true" || _val == "1"
-	}else {
-		*variable = default_value
+	} else {
+		*variable = defaultValue
 	}
 }
-func init() {
-	Config.Parse("./conf/asset-pipeline.conf")
-	Config.extensions = map[AssetType][]string{}
-	Config.preBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
-	Config.minifyCallbacks = map[string]minifyFileCallback{}
-	Config.afterBuildCallbacks = map[AssetType][]pre_afterBuildCallback{}
-	Config.preLoadCallbacks = map[AssetType][]preLoadCallback{}
-}
-
-var Config assetPipelineConfig
-

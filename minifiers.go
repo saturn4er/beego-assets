@@ -1,31 +1,33 @@
-package beego_assets
+package beegoAssets
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
-	"github.com/tdewolff/minify/js"
+
 	"github.com/tdewolff/minify/css"
+	"github.com/tdewolff/minify/js"
 )
 
+//MinifyStylesheet - Minify css file
 func MinifyStylesheet(body string) (string, error) {
-	b_result := bytes.NewBuffer([]byte{})
-	body_reader := strings.NewReader(body)
-	err := css.Minify(minifier, b_result, body_reader, map[string]string{})
+	bResult := bytes.NewBuffer([]byte{})
+	bodyReader := strings.NewReader(body)
+	err := css.Minify(minifier, bResult, bodyReader, map[string]string{})
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Minification error: %v", err))
+		return "", fmt.Errorf("Minification error: %v", err)
 	}
-	return b_result.String(), nil
+	return bResult.String(), nil
 }
 
+//MinifyJavascript - Minify js file
 func MinifyJavascript(body string) (string, error) {
-	b_result := bytes.NewBuffer([]byte{})
-	body_reader := strings.NewReader(body)
+	bResult := bytes.NewBuffer([]byte{})
+	bodyReader := strings.NewReader(body)
 
-	err := js.Minify(minifier, b_result, body_reader, map[string]string{})
+	err := js.Minify(minifier, bResult, bodyReader, map[string]string{})
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Minification error: %v", err))
+		return "", fmt.Errorf("Minification error: %v", err)
 	}
-	return b_result.String(), nil
+	return bResult.String(), nil
 }
