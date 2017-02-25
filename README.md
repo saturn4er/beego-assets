@@ -35,7 +35,7 @@ After that you can use less by adding following line to your imports
 	Less: import _ "github.com/saturn4er/beego-assets/less"
 	Sass: import _ "github.com/saturn4er/beego-assets/sass"
 	Scss: import _ "github.com/saturn4er/beego-assets/scss"
-	Coffeescript: import _ "github.com/saturn4er/beego-assets/coffeescript"
+	Coffeescript: import _ "github.com/saturn4er/beego-assets/coffee"
 
 ## Asset format
 Asset extension sholud be .js or .css. Depends on include_tag function<br>

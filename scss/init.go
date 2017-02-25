@@ -7,11 +7,14 @@ import (
 	"os/exec"
 	"os"
 	"crypto/md5"
+	"bytes"
 )
 
 const SCSS_EXTENSION = ".scss"
 const SCSS_EXTENSION_LEN = len(SCSS_EXTENSION)
+
 var scss_built_files_dir = filepath.Join(beego_assets.Config.TempDir, "scss")
+
 func init() {
 	_, err := exec.LookPath("sass")
 	if err != nil {
@@ -40,11 +43,14 @@ func BuildScssAsset(asset *beego_assets.Asset) error {
 			file := filepath.Base(src)
 			file_name := file[:len(file) - SCSS_EXTENSION_LEN]
 			new_file_path := filepath.Join(scss_built_files_dir, file_name + "-" + md5_s + "_build.css")
-			ex := exec.Command("lessc", "--scss", src, new_file_path)
-			ex.Start()
-			err = ex.Wait()
+			ex := exec.Command("sass", "--scss", src, new_file_path)
+			var out bytes.Buffer
+			ex.Stderr = &out
+			err = ex.Run()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Error building SCSS file:")
+				fmt.Println(out.String())
+				continue
 			}
 			asset.Include_files[i] = new_file_path
 
