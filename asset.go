@@ -1,20 +1,17 @@
 package beegoAssets
 
 import (
-	"bufio"
 	"errors"
 	"html/template"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/tdewolff/minify"
+	"io/ioutil"
 )
 
-var minifier = minify.New()
 var parsedAssets = map[string]map[assetsType]*Asset{}
 
 // Asset - Asset type can be any asset(js,css,sass etc)
@@ -33,23 +30,17 @@ func (a *Asset) parse() error {
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(assetPath, os.O_RDONLY, 0666)
-	if err != nil {
-		return err
+	assetFile, errAsset := ioutil.ReadFile(assetPath)
+	if errAsset != nil {
+		return errAsset
 	}
-	assetReader := bufio.NewReader(file)
-	for {
-		_line, _, err := assetReader.ReadLine()
-		if err == io.EOF {
-			break
-		}
-		line := string(_line)
-		var prefix string
-		if a.assetType == AssetJavascript {
-			prefix = "//= require "
-		} else {
-			prefix = "/*= require "
-		}
+	var prefix string
+	if a.assetType == AssetJavascript {
+		prefix = "//= require "
+	} else {
+		prefix = "/*= require "
+	}
+	for _, line := range strings.Split(string(assetFile), "\n") {
 		if strings.HasPrefix(line, prefix) {
 			includeFile := line[len(prefix):]
 			file, err := a.findIncludeFilePath(includeFile)
@@ -91,7 +82,6 @@ func (a *Asset) findIncludeFilePath(file string) (string, error) {
 				return filePath, nil
 			}
 		}
-
 	}
 	return "", errors.New("Can't find file")
 }
@@ -191,26 +181,13 @@ func (a *Asset) combine() {
 // Read all files from Include files and return map[path_to_file]body
 func (a *Asset) readAllIncludeFiles() []assetFile {
 	result := []assetFile{}
-
 	for _, path := range a.IncludeFiles {
-		file, err := os.OpenFile(path, os.O_RDONLY, 0766)
+		fileBody, err := ioutil.ReadFile(path)
 		if err != nil {
-			Warning("Can't open file %s. %v", path, err)
+			Warning("Can't read file %s. %v", path, err)
+			continue
 		}
-		fileBody := ""
-		fileReader := bufio.NewReader(file)
-		for {
-			line, _, err := fileReader.ReadLine()
-			if err == io.EOF {
-				break
-			}
-			fileBody += string(line) + "\n"
-		}
-		result = append(result, assetFile{Path: path, Body: fileBody})
-		err = file.Close()
-		if err != nil {
-			Warning("Can't close file %s. %v", path, err)
-		}
+		result = append(result, assetFile{Path: path, Body: string(fileBody)})
 	}
 	return result
 }
@@ -223,17 +200,9 @@ func (a *Asset) writeResultToFiles() {
 			Error(pathDir)
 			continue
 		}
-		file, err := os.OpenFile(assetFile.Path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0766)
+		err = ioutil.WriteFile(assetFile.Path, []byte(assetFile.Body), 0766)
 		if err != nil {
 			Error("Can't write result file: %v", err)
-		}
-		_, err = file.WriteString(assetFile.Body)
-		if err != nil {
-			Error("Can't write body to result file: %v", err)
-		}
-		err = file.Close()
-		if err != nil {
-			Warning("Can't close file %s. %v", file.Name(), err)
 		}
 	}
 }
@@ -287,19 +256,11 @@ func getAsset(assetName string, assetType assetsType) (*Asset, error) {
 	result.assetType = assetType
 	result.assetName = assetName
 	if assetType == AssetJavascript {
-		if Config.MinifyJS {
-			result.needMinify = true
-		}
-		if Config.CombineJS {
-			result.needCombine = true
-		}
+		result.needMinify = Config.MinifyJS
+		result.needCombine = Config.CombineJS
 	} else {
-		if Config.MinifyCSS {
-			result.needMinify = true
-		}
-		if Config.CombineCSS {
-			result.needCombine = true
-		}
+		result.needMinify = Config.MinifyCSS
+		result.needCombine = Config.CombineCSS
 	}
 	err := result.parse()
 	if err == nil {

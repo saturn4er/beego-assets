@@ -38,7 +38,7 @@ type assetPipelineConfig struct {
 var Config assetPipelineConfig
 
 func init() {
-	Config.Parse("./conf/Asset-pipeline.conf")
+	Config.Parse("./conf/asset-pipeline.conf")
 	Config.extensions = map[assetsType][]string{}
 	Config.preBuildCallbacks = map[assetsType][]preAfterBuildCallback{}
 	Config.minifyCallbacks = map[string]minifyFileCallback{}
@@ -56,7 +56,7 @@ func (a *assetPipelineConfig) Parse(filename string) {
 	locations := config.DefaultString("assets_dirs", "")
 	Config.AssetsLocations = strings.Split(locations, ",")
 
-	publicDirs := config.DefaultString("publicDirs", "")
+	publicDirs := config.DefaultString("public_dirs", "")
 	Config.PublicDirs = strings.Split(publicDirs, ",")
 	Config.TempDir = config.DefaultString("temp_dir", "static/assets")
 
