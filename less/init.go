@@ -1,48 +1,52 @@
 package less
 
 import (
-	"github.com/saturn4er/beego-assets"
-	"path/filepath"
-	"fmt"
-	"os/exec"
-	"os"
-	"crypto/md5"
 	"bytes"
+	"crypto/md5"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+
+	"github.com/gtforge/beego-assets"
 )
 
-const LESS_EXTENSION = ".less"
-const LESS_EXTENSION_LEN = len(LESS_EXTENSION)
-var less_built_files_dir = filepath.Join(beego_assets.Config.TempDir, "less")
+const lessExtension = ".less"
+const lessExtensionLen = len(lessExtension)
+
+var lessBuiltFilesDir = filepath.Join(beegoAssets.Config.TempDir, "less")
+
 func init() {
 	_, err := exec.LookPath("lessc")
 	if err != nil {
-		beego_assets.Error("Please, install Node.js less compiler: npm install less -g")
+		beegoAssets.Error("Please, install Node.js less compiler: npm install less -g")
 		return
 	}
 
-	beego_assets.SetAssetFileExtension(LESS_EXTENSION, beego_assets.ASSET_STYLESHEET)
-	beego_assets.SetPreLoadCallback(beego_assets.ASSET_STYLESHEET, BuildLessAsset)
-	err = os.MkdirAll(less_built_files_dir, 0766)
+	beegoAssets.SetAssetFileExtension(lessExtension, beegoAssets.AssetStylesheet)
+	beegoAssets.SetPreLoadCallback(beegoAssets.AssetStylesheet, BuildLessAsset)
+	err = os.MkdirAll(lessBuiltFilesDir, 0766)
 	if err != nil {
-		beego_assets.Error(err.Error())
+		beegoAssets.Error(err.Error())
 		return
 	}
 }
-func BuildLessAsset(asset *beego_assets.Asset) error {
-	for i, src := range asset.Include_files {
+
+// BuildLessAsset - build less file from beegoAssets.Asset
+func BuildLessAsset(asset *beegoAssets.Asset) error {
+	for i, src := range asset.IncludeFiles {
 		ext := filepath.Ext(src)
-		if ext == LESS_EXTENSION {
+		if ext == lessExtension {
 			stat, err := os.Stat(src)
 			if err != nil {
-				beego_assets.Error("Can't get stat of file %s. %v", src, err)
+				beegoAssets.Error("Can't get stat of file %s. %v", src, err)
 				continue
 			}
-			md5 := md5.Sum([]byte(stat.ModTime().String() + src))
-			md5_s := fmt.Sprintf("%x", md5)
+			md5 := fmt.Sprintf("%x", md5.Sum([]byte(stat.ModTime().String()+src)))
 			file := filepath.Base(src)
-			file_name := file[:len(file) - LESS_EXTENSION_LEN]
-			new_file_path := filepath.Join(less_built_files_dir, file_name + "-" + md5_s + "_build.css")
-			ex := exec.Command("lessc", src, new_file_path)
+			fileName := file[:len(file)-lessExtensionLen]
+			newFilePath := filepath.Join(lessBuiltFilesDir, fileName+"-"+md5+"_build.css")
+			ex := exec.Command("lessc", src, newFilePath)
 			var out bytes.Buffer
 			ex.Stderr = &out
 			err = ex.Run()
@@ -51,8 +55,7 @@ func BuildLessAsset(asset *beego_assets.Asset) error {
 				fmt.Println(out.String())
 				continue
 			}
-			asset.Include_files[i] = new_file_path
-
+			asset.IncludeFiles[i] = newFilePath
 		}
 	}
 	return nil

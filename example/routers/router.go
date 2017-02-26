@@ -1,10 +1,10 @@
 package routers
 
 import (
-	"github.com/saturn4er/beego-assets/example/controllers"
 	"github.com/astaxie/beego"
+	"github.com/gtforge/beego-assets/example/controllers"
 )
 
 func init() {
-    beego.Router("/", &controllers.MainController{})
+	beego.Router("/", &controllers.MainController{})
 }

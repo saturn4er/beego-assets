@@ -1,14 +1,17 @@
-package beego_assets
+package beegoAssets
 
 import "github.com/astaxie/beego/logs"
 
-var Logger = logs.NewLogger(10000)
+var logger = logs.NewLogger(10000)
 
-const PREFIX = "[ ASSET_PIPELINE ] "
+const prefix = "[ ASSET_PIPELINE ] "
 
-func Warning(format string, v... interface{}) {
-	Logger.Warning(PREFIX + format, v...)
+//Warning - print Warning in log
+func Warning(format string, v ...interface{}) {
+	logger.Warning(prefix+format, v...)
 }
-func Error(format string, v... interface{}) {
-	Logger.Error(PREFIX + format, v...)
+
+//Error - print Error in log
+func Error(format string, v ...interface{}) {
+	logger.Error(prefix+format, v...)
 }
