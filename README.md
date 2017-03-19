@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gtforge/beego-assets.svg?branch=master)](https://travis-ci.org/gtforge/beego-assets)
+[![Build Status](https://travis-ci.org/gtforge/beego-assets.svg?branch=master)](https://travis-ci.org/gtforge/beego-assets)[![Go Report Card](https://goreportcard.com/badge/github.com/gtforge/beego-assets)](https://goreportcard.com/report/github.com/gtforge/beego-assets)
 ## Description
 Rails-style assets for golang beego web framework
 
