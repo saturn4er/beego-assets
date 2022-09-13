@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/config"
+	"github.com/beego/beego"
+	"github.com/beego/beego/config"
 )
 
 type assetPipelineConfig struct {

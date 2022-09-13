@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/astaxie/beego"
+	"github.com/beego/beego"
 	_ "github.com/gtforge/beego-assets"
 	_ "github.com/gtforge/beego-assets/coffee"
 	_ "github.com/gtforge/beego-assets/example/routers"
