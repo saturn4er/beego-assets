@@ -3,7 +3,7 @@ package beegoAssets
 import (
 	"html/template"
 
-	"github.com/astaxie/beego"
+	"github.com/beego/beego"
 )
 
 func init() {
